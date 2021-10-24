@@ -95,7 +95,7 @@ public class UserProfileDBHandler {
 	private static final int LAST_LOGGED_IN_TIME_DIFF = 15;
 	private static final long LAST_LOGGED_IN_TIME_DIFF_IN_MILLIS = LAST_LOGGED_IN_TIME_DIFF * 60 * 1000; 
 	private static final String GET_LOGGED_IN_USERS_COUNT = "SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE (" + LASTLOGGEDDATE 
-			+ "- ?) < " + LAST_LOGGED_IN_TIME_DIFF_IN_MILLIS; 
+			+ "- ?) < " + LAST_LOGGED_IN_TIME_DIFF_IN_MILLIS + " AND (" + ID + " >= " + " ? ) AND (" + ID + " <= " + "?)"; 
 	
 	
 	private static final String SOURCE = "0123456789"; //ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz 
@@ -378,7 +378,7 @@ public class UserProfileDBHandler {
 		}
 	}
 	
-	public long getLoggedInUsersCount() throws SQLException {
+	public long getLoggedInUsersCount(long serverRangeStart, long serverRangeEnd) throws SQLException {
 		
 		String totalSql = GET_LOGGED_IN_USERS_COUNT;
 		ConnectionPool cp = ConnectionPool.getInstance();
@@ -386,6 +386,8 @@ public class UserProfileDBHandler {
 		
 		PreparedStatement totalPs = dbConn.prepareStatement(totalSql);
 		totalPs.setLong(1, System.currentTimeMillis());
+		totalPs.setLong(2, serverRangeStart);
+		totalPs.setLong(3, serverRangeEnd);
 		
 		ResultSet totalRs = null;
 		long total = 0;

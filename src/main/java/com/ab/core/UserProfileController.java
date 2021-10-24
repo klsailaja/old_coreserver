@@ -18,18 +18,26 @@ import com.ab.core.db.VerifyUserProfile;
 import com.ab.core.exceptions.InternalException;
 import com.ab.core.exceptions.NotAllowedException;
 import com.ab.core.handlers.UserProfileHandler;
+import com.ab.core.helper.LoggedInUsersCountManager;
 import com.ab.core.pojo.LoginData;
 import com.ab.core.pojo.Mail;
 import com.ab.core.pojo.OTPDetails;
 import com.ab.core.pojo.ReferalDetails;
 import com.ab.core.pojo.TransactionsHolder;
 import com.ab.core.pojo.UserProfile;
+import com.ab.core.tasks.LoggedInUsersCountTask;
 import com.ab.core.tasks.SendMailTask;
 
 @RestController
 public class UserProfileController extends BaseController {
 	
 	private static final Logger logger = LogManager.getLogger(UserProfileController.class);
+	
+	@RequestMapping(value = "/loggedin/count/{serverIndex}", method = RequestMethod.GET, produces = "application/json") 
+	public @ResponseBody long getLoggedInUserCount(@PathVariable("serverIndex") int serverIndex) throws InternalException {
+		LoggedInUsersCountTask task = LoggedInUsersCountManager.getInstance().createIfDoesNotExist(serverIndex);
+		return task.getUsersCount();
+	}
 	
 	
 	@RequestMapping(value = "/user/{id}", method = RequestMethod.GET, produces = "application/json") 

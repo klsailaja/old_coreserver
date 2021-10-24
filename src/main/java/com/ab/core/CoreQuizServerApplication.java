@@ -11,7 +11,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.ab.core.common.LazyScheduler;
+import com.ab.core.constants.QuizConstants;
+import com.ab.core.helper.LoggedInUsersCountManager;
 import com.ab.core.tasks.DeleteOldRecords;
+import com.ab.core.tasks.LoggedInUsersCountTask;
 
 @SpringBootApplication
 public class CoreQuizServerApplication implements ApplicationRunner {
@@ -37,6 +40,14 @@ public class CoreQuizServerApplication implements ApplicationRunner {
 		
 		LazyScheduler.getInstance().submitRepeatedTask(new DeleteOldRecords(), initialDelay, 
 				24 * 60 * 1000, TimeUnit.MILLISECONDS);
-
+		
+		long gapBetweenServerInstances = 2 * 60 * 1000;
+		long gap = 0;
+		for (int index = 1; index <= QuizConstants.CURRENT_SERVERS_COUNT; index ++) {
+			LoggedInUsersCountTask task = LoggedInUsersCountManager.getInstance().createIfDoesNotExist(index);
+			LazyScheduler.getInstance().submitRepeatedTask(task, gap, 
+					QuizConstants.LOGGED_IN_USERS_COUNT_UPDATE_TIME_INTERVAL_IN_MILLIS, TimeUnit.MILLISECONDS);
+			gap = gap + gapBetweenServerInstances;
+		}
 	}
 }
