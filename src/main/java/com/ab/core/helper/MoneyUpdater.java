@@ -54,7 +54,7 @@ public class MoneyUpdater {
 		userIdVsReferMoney.clear();
 	}
 	
-	public synchronized void performTransactions(UsersCompleteMoneyDetails usersMoneyDetails) throws SQLException {
+	public synchronized List<Integer> performTransactions(UsersCompleteMoneyDetails usersMoneyDetails) throws SQLException {
 		
 		long startTime = System.currentTimeMillis();
 		
@@ -110,7 +110,7 @@ public class MoneyUpdater {
 			
 		}
 		
-		bulkUpdate();
+		List<Integer> moneyUpdateResults = bulkUpdate();
 		
 		UserMoneyDBHandler.getInstance().updateUsersMoneyEntriesInBatch(userIdVsReferMoney, 50, 
 				UserMoneyDBHandler.UPDATE_REFERMONEY_BY_USER_ID, "REFER");
@@ -120,9 +120,11 @@ public class MoneyUpdater {
 		clearStates();
 		
 		logger.info("Total Time in MoneyUpdater performTransactions {}", (System.currentTimeMillis() - startTime));
+		
+		return moneyUpdateResults;
 	}
 	
-	private void bulkUpdate() throws SQLException {
+	private List<Integer> bulkUpdate() throws SQLException {
 		
 		ConnectionPool cp = null;
 		Connection dbConn = null;
@@ -204,6 +206,8 @@ public class MoneyUpdater {
 			}
 			
 			SingleThreadAddTransactions.getInstance().submit(new AddTransactionsTask(transactionsList));
+			
+			return resultsList;
 			
 		} catch(SQLException ex) {
 			logger.error("Error in bulk update in Money Updater", ex);

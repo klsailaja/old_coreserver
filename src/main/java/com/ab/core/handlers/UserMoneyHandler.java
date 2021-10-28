@@ -1,14 +1,20 @@
 package com.ab.core.handlers;
 
 import java.io.FileNotFoundException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ab.core.common.LazyScheduler;
 import com.ab.core.constants.TransactionType;
 import com.ab.core.constants.UserMoneyAccountType;
 import com.ab.core.constants.UserMoneyOperType;
+import com.ab.core.db.ConnectionPool;
 import com.ab.core.db.UserMoneyDBHandler;
 import com.ab.core.exceptions.NotAllowedException;
 import com.ab.core.helper.SingleThreadMoneyUpdater;
@@ -17,6 +23,8 @@ import com.ab.core.pojo.MoneyTransaction;
 import com.ab.core.pojo.MyTransaction;
 import com.ab.core.pojo.UserMoney;
 import com.ab.core.pojo.UsersCompleteMoneyDetails;
+import com.ab.core.pojo.WithdrawMoney;
+import com.ab.core.tasks.AddTransactionsTask;
 import com.ab.core.tasks.UserMoneyUpdateProcessorTask;
 
 public class UserMoneyHandler {
@@ -39,7 +47,7 @@ public class UserMoneyHandler {
 		return userMoneyDb;
 	}
 	
-	public boolean performUserMoneyOperation(UsersCompleteMoneyDetails usersMoneyDetails) 
+	public List<Integer> performUserMoneyOperation(UsersCompleteMoneyDetails usersMoneyDetails) 
 			throws NotAllowedException, SQLException {
 		
 		String trackKey = usersMoneyDetails.getTrackStatusKey();
@@ -64,10 +72,72 @@ public class UserMoneyHandler {
 		
 		if (trackKey == null) {
 			moneyProcessorTask.run();
-			return true;
+			return moneyProcessorTask.getMoneyUpdateResults();
 		}
 		
 		SingleThreadMoneyUpdater.getInstance().submit(moneyProcessorTask);
+		return null;
+	}
+	
+	public boolean performWitdrawOperation(WithdrawMoney wdMoney) throws SQLException {
+		
+		String wdSql = UserMoneyDBHandler.WITHDRAW_BALANCE_AMOUNT_BY_USER_ID;
+		
+		ConnectionPool cp = null;
+		Connection dbConn = null;
+		PreparedStatement ps = null;
+		
+		long userProfileId = wdMoney.getUid();
+		
+		UserMoneyAccountType accType = UserMoneyAccountType.LOADED_MONEY; 
+		
+		List<UserMoneyAccountType> accTypes = new ArrayList<>();
+		accTypes.add(accType);
+				
+		List<TransactionType> transactionTypes = new ArrayList<>();
+		transactionTypes.add(TransactionType.DEBITED);
+				
+		List<String> comments = new ArrayList<>();
+		comments.add("Withdraw Request Placed");
+				
+		List<MyTransaction> wdRelatedTransactions = UserMoneyDBHandler.getInstance(). 
+			getTransactionObjects(wdMoney.getUid(), wdMoney.getWdAmt(), 
+						accTypes, transactionTypes, comments);
+	
+		int transferRes = 0;
+		
+		try {
+			cp = ConnectionPool.getInstance();
+			dbConn = cp.getDBConnection();
+			ps = dbConn.prepareStatement(wdSql);
+			
+			int withdrawAmt = wdMoney.getWdAmt();
+			
+			ps.setLong(1, (withdrawAmt * -1));
+			ps.setLong(2, withdrawAmt);
+			ps.setLong(3, userProfileId);
+			
+			int createResult = ps.executeUpdate();
+			if (createResult > 0) {
+				transferRes = 1;
+			}
+			logger.debug("WithdrawMoney createResult {}", createResult);
+			for (MyTransaction transaction : wdRelatedTransactions) {
+				transaction.setOperResult(transferRes);
+			}
+			
+			LazyScheduler.getInstance().submit(new AddTransactionsTask(wdRelatedTransactions));
+		} catch(SQLException ex) {
+			logger.error("Error while executing withdraw lock money statement", ex);
+			throw ex;
+		} finally {
+			if (ps != null) {
+				ps.close();
+			}
+			if (dbConn != null) {
+				dbConn.close();
+			}
+		}
 		return true;
 	}
 	
