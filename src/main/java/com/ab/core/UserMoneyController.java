@@ -19,8 +19,6 @@ import com.ab.core.pojo.UserMoney;
 import com.ab.core.pojo.UsersCompleteMoneyDetails;
 import com.ab.core.pojo.WithdrawMoney;
 
-
-
 @RestController
 public class UserMoneyController extends BaseController {
 	private static final Logger logger = LogManager.getLogger(UserMoneyController.class);

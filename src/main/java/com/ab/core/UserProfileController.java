@@ -184,23 +184,6 @@ public class UserProfileController extends BaseController {
 		}
 	}
 	
-	
-	@RequestMapping(value = "/user/transaction/{userProfileId}/{pageNum}/{accType}", method = RequestMethod.GET,
-			produces = "application/json") 
-	public @ResponseBody TransactionsHolder getTransactions(@PathVariable("userProfileId") long userProfileId,
-			@PathVariable("pageNum") int pageNum, @PathVariable("accType") int accType) throws InternalException, NotAllowedException {
-		logger.info("getTransactions is called with user id {} : pageNo {}", userProfileId, pageNum);
-		try {
-			UserProfileHandler profileHandler = UserProfileHandler.getInstance();
-			TransactionsHolder transactionsDetails = profileHandler.getTransactionsList(userProfileId, pageNum, accType); 
-			logger.info("Transactions list size is {} for user profile id {}", transactionsDetails.getTransactionsList().size(), userProfileId);
-			return transactionsDetails;
-		} catch (SQLException ex) {
-			logger.error("Exception in getTransactionsList", ex);
-			throw new InternalException("Server Error in getTransactionsList");
-		}
-	}
-	
 	@RequestMapping(value = "/user/verify", method = RequestMethod.POST, produces = "application/json")
 	public @ResponseBody String verifyOTP(@RequestBody OTPDetails otpDetails)
 			throws NotAllowedException, InternalException {
@@ -277,6 +260,24 @@ public class UserProfileController extends BaseController {
 			throw new InternalException("Server Error in verifyUserIdGenerateOTP");
 		}
 	}
+	
+	@RequestMapping(value = "/user/transaction/{userProfileId}/{pageNum}/{accType}", method = RequestMethod.GET,
+			produces = "application/json") 
+	public @ResponseBody TransactionsHolder getTransactions(@PathVariable("userProfileId") long userProfileId,
+			@PathVariable("pageNum") int pageNum, @PathVariable("accType") int accType) throws InternalException, NotAllowedException {
+		logger.info("getTransactions is called with user id {} : pageNo {}", userProfileId, pageNum);
+		try {
+			UserProfileHandler profileHandler = UserProfileHandler.getInstance();
+			TransactionsHolder transactionsDetails = profileHandler.getTransactionsList(userProfileId, pageNum, accType); 
+			logger.info("Transactions list size is {} for user profile id {}", transactionsDetails.getTransactionsList().size(), userProfileId);
+			return transactionsDetails;
+		} catch (SQLException ex) {
+			logger.error("Exception in getTransactionsList", ex);
+			throw new InternalException("Server Error in getTransactionsList");
+		}
+	}
+	
+	@
 	
 	private ServerDetails getServerDetails(long userId) {
 		

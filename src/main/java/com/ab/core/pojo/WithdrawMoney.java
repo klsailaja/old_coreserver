@@ -3,7 +3,8 @@ package com.ab.core.pojo;
 public class WithdrawMoney {
 	private long uid;
 	private int wdAmt;
-	
+	private int wdType;
+	private MyTransaction transaction;
 	public long getUid() {
 		return uid;
 	}
@@ -16,4 +17,16 @@ public class WithdrawMoney {
 	public void setWdAmt(int wdAmt) {
 		this.wdAmt = wdAmt;
 	}
+	public int getWdType() {
+		return wdType;
+	}
+	public void setWdType(int wdType) {
+		this.wdType = wdType;
+	}
+	public MyTransaction getTransaction() {
+		return transaction;
+	}
+	public void setTransaction(MyTransaction transaction) {
+		this.transaction = transaction;
+	} 
 }
