@@ -60,12 +60,15 @@ public class Utils {
 	}
 	
 	public static void getClosedCircleUserIds(long userId, int maxUsers, List<Long> closedGrpUserIds,
-			List<String> closedGrpUserNames) throws SQLException {
+			List<String> closedGrpUserNames, long uidStart, long uidEnd) throws SQLException {
 		int index = 0;
 		UserProfile userProfile = UserProfileDBHandler.getInstance().getProfileById(userId);
 		long bossUserId = userProfile.getBossId();
 		
 		while ((index < maxUsers) && (bossUserId > 0)) {
+			if ((bossUserId < uidStart) || (bossUserId > uidEnd)) {
+				break;
+			}
 			closedGrpUserIds.add(bossUserId);
 			userProfile = UserProfileDBHandler.getInstance().getProfileById(bossUserId);
 			closedGrpUserNames.add(userProfile.getName());

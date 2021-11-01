@@ -1,6 +1,8 @@
 package com.ab.core;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,11 +21,14 @@ import com.ab.core.exceptions.InternalException;
 import com.ab.core.exceptions.NotAllowedException;
 import com.ab.core.handlers.UserProfileHandler;
 import com.ab.core.helper.LoggedInUsersCountManager;
+import com.ab.core.helper.Utils;
+import com.ab.core.helper.WinMsgHandler;
 import com.ab.core.pojo.LoginData;
 import com.ab.core.pojo.Mail;
 import com.ab.core.pojo.OTPDetails;
 import com.ab.core.pojo.ReferalDetails;
 import com.ab.core.pojo.TransactionsHolder;
+import com.ab.core.pojo.UserNetwork;
 import com.ab.core.pojo.UserProfile;
 import com.ab.core.tasks.LoggedInUsersCountTask;
 import com.ab.core.tasks.SendMailTask;
@@ -277,7 +282,49 @@ public class UserProfileController extends BaseController {
 		}
 	}
 	
-	@
+	@RequestMapping (value = "/wd/messages", method = RequestMethod.POST, produces = "application/json")
+	public @ResponseBody String postGenericWithdrawMessages(@RequestBody List<String> withDrawMsgs) {
+		WinMsgHandler.getInstance().setWithdrawMessages(withDrawMsgs);
+		return String.valueOf(true);
+	}
+	
+	@RequestMapping(value = "/wd/messages/{userId}/{maxCount}", method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody List<String> getRecentWinWDMessages(@PathVariable long userId, @PathVariable int maxCount) 
+			throws NotAllowedException, InternalException {
+		
+		logger.info("In getRecentWinWDMessages with userId {} and {}", userId, maxCount);
+		List<String> combinedMsgs = WinMsgHandler.getInstance().getCombinedMessages();
+		return combinedMsgs;
+	}
+	
+	@RequestMapping(value = "/user/network/{userId}/{maxCount}", method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody UserNetwork getUserNetworkIds(@PathVariable long userId, @PathVariable int maxCount)
+			throws InternalException {
+		
+		try {
+			List<Long> closedGroupMembersIds = new ArrayList<>();
+			List<String> closedGroupMembersNames = new ArrayList<>();
+			
+			long index = (userId / QuizConstants.MAX_USERS_PER_SERVER);
+			long serverRangeStart =  index * QuizConstants.MAX_USERS_PER_SERVER + 1;
+			long serverRangeEnd = (index + 1) * QuizConstants.MAX_USERS_PER_SERVER;
+			
+			Utils.getClosedCircleUserIds(userId, maxCount, closedGroupMembersIds, closedGroupMembersNames, 
+					serverRangeStart, serverRangeEnd);
+			
+			UserNetwork userNetwork = new UserNetwork();
+			userNetwork.setClosedUserIdSet(closedGroupMembersIds);
+			userNetwork.setClosedUserNameList(closedGroupMembersNames);
+			
+			return userNetwork;
+		
+		} catch (SQLException ex) {
+			logger.error("Exception while getting the closed users details ", ex);
+			throw new InternalException("Error while gettin the closed users details");
+		}
+	}
+	
+	
 	
 	private ServerDetails getServerDetails(long userId) {
 		
