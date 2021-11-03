@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARNING">
+    <Appenders>
+    	<RollingFile 
+    		name="rollingFile" 
+    		fileName="D:\\logs\\core.log"
+        	filePattern="D:\\logs\\core-%d{MM-dd-yyyy}-%i.log">
+        	<PatternLayout>
+        		<Pattern>%d{yyyy-MM-dd HH:mm:ss} %-5p %m%n</Pattern>
+        	</PatternLayout>
+        	<Policies>              
+            	<TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+        	</Policies>
+    	</RollingFile>
+        <RollingFile
+    		name="T"
+    		fileName="D:\\logs\\core.log"
+     		filePattern="D:\\logs\\core.%d{dd-MMM}.log.gz"
+    		ignoreExceptions="false">
+    		<PatternLayout>
+        		<Pattern>%d{yyyy-MM-dd HH:mm:ss} %-5p %m%n</Pattern>
+    		</PatternLayout>
+    		<Policies>
+        		<TimeBasedTriggeringPolicy interval="1"/>
+    		</Policies>
+    	<DefaultRolloverStrategy max="5" />
+	</RollingFile>
+    </Appenders>
+    <Loggers>
+        <Logger name="com.ab" level="info" additivity="false">
+            <AppenderRef ref="rollingFile"/>
+            <AppenderRef ref="rollingFile"/>
+        </Logger>
+        <Logger name="org.springframework.boot" level="error" additivity="false">
+            <AppenderRef ref="rollingFile"/>
+        </Logger>
+        <Root level="error">
+            <AppenderRef ref="rollingFile"/>
+            <AppenderRef ref="rollingFile"/>
+        </Root>
+    </Loggers>
+</Configuration>
+

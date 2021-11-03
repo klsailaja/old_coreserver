@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ab.core.exceptions.InternalException;
 import com.ab.core.exceptions.NotAllowedException;
 import com.ab.core.handlers.UserMoneyHandler;
+import com.ab.core.helper.MoneyUpdater;
 import com.ab.core.pojo.UserMoney;
 import com.ab.core.pojo.UsersCompleteMoneyDetails;
 import com.ab.core.pojo.WithdrawMoney;
@@ -59,6 +60,11 @@ public class UserMoneyController extends BaseController {
 			logger.error("Exception in performWithdraw", ex);
 			throw new InternalException("Server Error in performWithdraw");
 		}
+	}
+	
+	@RequestMapping(value = "/money/update/{trackKey}", method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody int getGamesSlotMoneyStatus(@PathVariable("trackKey") String trackKey) throws InternalException {
+		return MoneyUpdater.getInstance().getGameSlotStatus(trackKey);
 	}
 	
 	/*

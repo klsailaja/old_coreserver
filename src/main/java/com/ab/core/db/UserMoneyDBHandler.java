@@ -85,19 +85,11 @@ public class UserMoneyDBHandler {
 	
 	public void updateUsersMoneyEntriesInBatch(Map<Long, Long> userIdVsMoney, int batchSize, String sqlQry, String recordType) 
 			throws SQLException {
-		
-		int tobeUpdatedRecords = 0;
-		for (Map.Entry<Long, Long> entry : userIdVsMoney.entrySet()) {
-			long winAmt = entry.getValue();
-			if (winAmt > 0) {
-				tobeUpdatedRecords++;
-			}
-		}
-		
-		if (tobeUpdatedRecords > 0) {
+
+		if (userIdVsMoney.size() == 0) {
 			return;
 		}
-		
+	
 		logger.info("This is in updateUsersMoneyEntriesInBatch with records size {} and type {}", userIdVsMoney.size(),
 				recordType);
 		

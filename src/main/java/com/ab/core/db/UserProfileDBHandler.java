@@ -731,7 +731,7 @@ public class UserProfileDBHandler {
 		
 		UserMoneyDBHandler userMoneyDBHandler = UserMoneyDBHandler.getInstance();
 		long total = 3000;
-		boolean batchMode = true;
+		boolean batchMode = false;
 		
 		List<UserProfile> testProfiles = new ArrayList<>();
 		// System Users from 1 - 10
@@ -793,10 +793,10 @@ public class UserProfileDBHandler {
 			userProfile.setName("testuser" + index);
 			userProfile.setPasswordHash("25d19baaef913d50b6a8e302909507b8059c6410a1c8d7e1a844d6069732202e");
 			
-			String bossReferId = "RAJASE21";
-			if (index > 1000) {
+			String bossReferId = "RAJASEKH21";
+			/*if (index > 1000) {
 				bossReferId = "TEST" + (index - 1);
-			}
+			}*/
 			userProfile.setBossReferredId(bossReferId);
 			userProfile.setForgotPasswdUsed(0);
 			userProfile.setLoggedIn(0);
