@@ -1,11 +1,8 @@
 package com.ab.core.tasks;
 
-import java.util.concurrent.TimeUnit;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.ab.core.common.LazyScheduler;
 import com.ab.core.constants.QuizConstants;
 import com.ab.core.db.UserProfileDBHandler;
 

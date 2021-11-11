@@ -14,7 +14,7 @@ import org.apache.logging.log4j.Logger;
 import com.ab.core.constants.TransactionType;
 import com.ab.core.constants.UserMoneyAccountType;
 import com.ab.core.constants.UserMoneyOperType;
-import com.ab.core.helper.InMemUserMoneyManager;
+import com.ab.core.handlers.UserMoneyHandler;
 import com.ab.core.helper.Utils;
 import com.ab.core.pojo.MyTransaction;
 import com.ab.core.pojo.UserMoney;
@@ -363,7 +363,7 @@ public class UserMoneyDBHandler {
 		List<MyTransaction> transactionList = new ArrayList<>();
 
 		try {
-			UserMoney userMoney = InMemUserMoneyManager.getInstance().getUserMoneyById(userId);
+			UserMoney userMoney = UserMoneyHandler.getInstance().getUserMoney(userId);
 			
 			for (int index = 0; index < accountTypeList.size(); index ++) {
 				

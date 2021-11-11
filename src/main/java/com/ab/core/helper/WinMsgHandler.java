@@ -18,7 +18,8 @@ public class WinMsgHandler implements Runnable {
 	private static WinMsgHandler instance = null;
 	
 	private List<String> combinedMessages = new ArrayList<>();
-	private List<String> gameWdMsgs = new ArrayList();
+	private List<String> gameWdMsgs = new ArrayList<>();
+	private List<String> gameWinMsgs = new ArrayList<>();
 	private ReadWriteLock lock = new ReentrantReadWriteLock();
 	
 	private WinMsgHandler() {
@@ -43,8 +44,13 @@ public class WinMsgHandler implements Runnable {
 		
 		lock.writeLock().lock();
 		try {
+			
 			combinedMessages.clear();
-			List<String> gameWinMsgs = MyTransactionDBHandler.getInstance().getRecentWinRecords(-1, false, null);
+			gameWinMsgs.clear();
+			
+			List<String> recentWinMsgs = MyTransactionDBHandler.getInstance().getRecentWinRecords(-1, false, null);
+			gameWinMsgs.addAll(recentWinMsgs);
+			
 			List<String> remainingMsgs = gameWinMsgs;
 			
 			int size1 = gameWinMsgs.size();
@@ -72,6 +78,10 @@ public class WinMsgHandler implements Runnable {
 	public void setWithdrawMessages(List<String> wdMsgs) {
 		gameWdMsgs.clear();
 		gameWdMsgs.addAll(wdMsgs);
+	}
+	
+	public List<String> getRecentWinMsgs() {
+		return gameWinMsgs;
 	}
 	
 	

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ab.core.common.LazyScheduler;
 import com.ab.core.constants.QuizConstants;
+import com.ab.core.db.MyTransactionDBHandler;
 import com.ab.core.db.UserProfileDBHandler;
 import com.ab.core.db.VerifyUserProfile;
 import com.ab.core.exceptions.InternalException;
@@ -288,6 +289,13 @@ public class UserProfileController extends BaseController {
 		return String.valueOf(true);
 	}
 	
+	@RequestMapping(value = "/win/messages", method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody List<String> getGenericWinMessages() {
+		return WinMsgHandler.getInstance().getRecentWinMsgs();
+	}
+	
+	
+	
 	@RequestMapping(value = "/wd/messages/{userId}/{maxCount}", method = RequestMethod.GET, produces = "application/json")
 	public @ResponseBody List<String> getRecentWinWDMessages(@PathVariable long userId, @PathVariable int maxCount) 
 			throws NotAllowedException, InternalException {
@@ -300,7 +308,39 @@ public class UserProfileController extends BaseController {
 	@RequestMapping(value = "/user/network/{userId}/{maxCount}", method = RequestMethod.GET, produces = "application/json")
 	public @ResponseBody UserNetwork getUserNetworkIds(@PathVariable long userId, @PathVariable int maxCount)
 			throws InternalException {
+		return getUserFrdDetails(userId, maxCount);
+	}
+	
+	@RequestMapping(value = "/user/win/{userId}/{maxCount}", method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody List<String> getUserFrdsWinMsgs(@PathVariable long userId, @PathVariable int maxCount)
+			throws InternalException {
 		
+		UserNetwork userNetwork = getUserFrdDetails(userId, maxCount);
+		
+		int frdSize = userNetwork.getClosedUserIdSet().size();
+		
+		List<String> frdsWinMsgs = new ArrayList<>();
+		
+		if (frdSize == 0) {
+			return frdsWinMsgs;
+		}
+		
+		for (int index = 1; index <= frdSize; index++) {
+			long frdUid = userNetwork.getClosedUserIdSet().get(index);
+			String frdName = userNetwork.getClosedUserNameList().get(index);
+			try {
+				List<String> frdWinMsgs = MyTransactionDBHandler.getInstance().getRecentWinRecords(frdUid, true, frdName);
+				frdsWinMsgs.addAll(frdWinMsgs);
+				frdWinMsgs.add("*");
+			} catch(SQLException ex) {
+				logger.error("Exception in getUserFrdsWinMsgs", ex);
+				continue;
+			}
+		}
+		return frdsWinMsgs;
+	}
+	
+	private UserNetwork getUserFrdDetails(long userId, int maxCount) throws InternalException {
 		try {
 			List<Long> closedGroupMembersIds = new ArrayList<>();
 			List<String> closedGroupMembersNames = new ArrayList<>();
