@@ -16,6 +16,7 @@
 	<properties>
 		<java.version>1.8</java.version>
 	</properties>
+	<packaging>jar</packaging>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -75,8 +76,13 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+    				<testFailureIgnore>true</testFailureIgnore>
+    				<forkCount>3</forkCount>
+    				<reuseForks>true</reuseForks>
+    				<argLine>-Xmx1024m -XX:MaxPermSize=256m</argLine>
+  				</configuration>
 			</plugin>
 		</plugins>
 	</build>
-
 </project>

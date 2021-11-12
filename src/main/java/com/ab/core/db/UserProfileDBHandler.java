@@ -730,8 +730,9 @@ public class UserProfileDBHandler {
 		UserProfileDBHandler dbHandler = UserProfileDBHandler.getInstance();
 		
 		UserMoneyDBHandler userMoneyDBHandler = UserMoneyDBHandler.getInstance();
-		long total = 3000;
-		boolean batchMode = false;
+		long total = 30000;
+		boolean batchMode = true;
+		long totalRecCount = 0;
 		
 		List<UserProfile> testProfiles = new ArrayList<>();
 		// System Users from 1 - 10
@@ -761,6 +762,7 @@ public class UserProfileDBHandler {
 				dbHandler.createUserProfile(userProfile);
 				//UserProfileHandler.getInstance().createUserProfile();
 			}
+			totalRecCount++;
 		}
 		
 		UserProfile userProfile = new UserProfile();
@@ -786,6 +788,7 @@ public class UserProfileDBHandler {
 		} else {
 			dbHandler.createUserProfile(userProfile);
 		}
+		totalRecCount++;
 		
 		for (int index = 22; index <= total; index ++) {
 			userProfile = new UserProfile();
@@ -798,6 +801,7 @@ public class UserProfileDBHandler {
 				bossReferId = "TEST" + (index - 1);
 			}*/
 			userProfile.setBossReferredId(bossReferId);
+			userProfile.setBossName("Rajasekhar");
 			userProfile.setForgotPasswdUsed(0);
 			userProfile.setLoggedIn(0);
 			userProfile.setCreatedDate(1609861020944L);
@@ -822,17 +826,21 @@ public class UserProfileDBHandler {
 				//dbHandler.createUserProfile(userProfile);
 				UserProfileHandler.getInstance().createUserProfile(userProfile);
 			}
+			totalRecCount++;
+			if ((totalRecCount % 100) == 0) {
+				System.out.println("TC :" + totalRecCount);
+			}
 		}
 		if (batchMode) {
 			//dbHandler.testCreatedUserProfileList(testProfiles, 200);
 		}
 	
 		List<UserMoney> userMoneys = new ArrayList<>();
-		
+		totalRecCount = 0;
 		for (int index = 1; index <= total; index ++) {
 			UserMoney userMoney = new UserMoney();
 			userMoney.setId(index);
-			userMoney.setAmount(50000);
+			userMoney.setAmount(100000);
 			userMoney.setAmtLocked(0);
 			
 			if (batchMode) {
@@ -844,6 +852,10 @@ public class UserProfileDBHandler {
 				
 			} else {
 				//userMoneyDBHandler.createUserMoney(userMoney);
+			}
+			totalRecCount++;
+			if ((totalRecCount % 100) == 0) {
+				System.out.println("TC :" + totalRecCount);
 			}
 		}
 		if (batchMode) {
