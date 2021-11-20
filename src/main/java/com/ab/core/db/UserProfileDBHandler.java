@@ -197,7 +197,7 @@ public class UserProfileDBHandler {
 		long maxUseId = ReferalDBHandler.getInstance().getCurrentMaxId();
 		maxUseId = maxUseId + 1;
 		int idStrLen = String.valueOf(maxUseId).length();
-		int remainingLen = 10 - idStrLen;
+		int remainingLen = 15 - idStrLen;
 		String userName = userProfile.getName().toUpperCase();
 		if (userName.length() >= remainingLen) {
 			userName = userName.substring(0, remainingLen);
@@ -730,7 +730,7 @@ public class UserProfileDBHandler {
 		UserProfileDBHandler dbHandler = UserProfileDBHandler.getInstance();
 		
 		UserMoneyDBHandler userMoneyDBHandler = UserMoneyDBHandler.getInstance();
-		long total = 30000;
+		long total = 1500000;
 		boolean batchMode = true;
 		long totalRecCount = 0;
 		
@@ -796,12 +796,13 @@ public class UserProfileDBHandler {
 			userProfile.setName("testuser" + index);
 			userProfile.setPasswordHash("25d19baaef913d50b6a8e302909507b8059c6410a1c8d7e1a844d6069732202e");
 			
-			String bossReferId = "RAJASEKH21";
+			String bossReferId = "RAJASEKHAR21";
 			/*if (index > 1000) {
 				bossReferId = "TEST" + (index - 1);
 			}*/
 			userProfile.setBossReferredId(bossReferId);
 			userProfile.setBossName("Rajasekhar");
+			userProfile.setBossId(21);
 			userProfile.setForgotPasswdUsed(0);
 			userProfile.setLoggedIn(0);
 			userProfile.setCreatedDate(1609861020944L);

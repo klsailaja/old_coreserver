@@ -373,6 +373,7 @@ public class UserProfileController extends BaseController {
 		int serverPort = -1;
 		
 		long serverIndex = userId / QuizConstants.MAX_USERS_PER_SERVER;
+		logger.info("userId is " + userId + " and si" + serverIndex);
 		
 		if (serverIndex == 0) {
 			ipAddr = "192.168.1.2";

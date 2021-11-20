@@ -90,9 +90,9 @@ public class UserMoneyHandler {
 		long userCB = userOB; 
 		
 		if (wdMoney.getWdType() == WithdrawReqState.OPEN.getId()) {
+			userCB = userOB - balance;
 			balance = -1 * balance;
 			lockBalance = wdMoney.getWdAmt();
-			userCB = userOB - balance; 
 		} else if (wdMoney.getWdType() == WithdrawReqState.CANCELLED.getId()) {
 			balance = wdMoney.getWdAmt();
 			lockBalance = -1 * lockBalance;
