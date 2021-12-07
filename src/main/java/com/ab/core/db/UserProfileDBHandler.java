@@ -197,7 +197,7 @@ public class UserProfileDBHandler {
 		long maxUseId = ReferalDBHandler.getInstance().getCurrentMaxId();
 		maxUseId = maxUseId + 1;
 		int idStrLen = String.valueOf(maxUseId).length();
-		int remainingLen = 15 - idStrLen;
+		int remainingLen = 10 - idStrLen;
 		String userName = userProfile.getName().toUpperCase();
 		if (userName.length() >= remainingLen) {
 			userName = userName.substring(0, remainingLen);

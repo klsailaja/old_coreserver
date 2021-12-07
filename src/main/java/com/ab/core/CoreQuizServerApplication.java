@@ -28,6 +28,7 @@ public class CoreQuizServerApplication implements ApplicationRunner {
 	@Override
 	public void run(ApplicationArguments args) {
 		
+		logger.info("This is in CoreQuizServerApplication");
 		Calendar calendar = Calendar.getInstance();
 		calendar.add(Calendar.DATE, 1);
 		calendar.set(Calendar.HOUR, 3);
