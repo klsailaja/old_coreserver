@@ -730,7 +730,7 @@ public class UserProfileDBHandler {
 		UserProfileDBHandler dbHandler = UserProfileDBHandler.getInstance();
 		
 		UserMoneyDBHandler userMoneyDBHandler = UserMoneyDBHandler.getInstance();
-		long total = 1500000;
+		long total = 30000;
 		boolean batchMode = true;
 		long totalRecCount = 0;
 		

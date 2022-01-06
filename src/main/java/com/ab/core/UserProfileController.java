@@ -376,13 +376,13 @@ public class UserProfileController extends BaseController {
 		logger.info("userId is " + userId + " and si" + serverIndex);
 		
 		if (serverIndex == 0) {
-			ipAddr = "192.168.1.2";
+			ipAddr = "192.168.1.4";
 			serverPort = 8081;
 		} else if (serverIndex == 1) {
-			ipAddr = "192.168.1.2";
+			ipAddr = "192.168.1.4";
 			serverPort = 8082;
 		} else if (serverIndex == 2) {
-			ipAddr = "192.168.1.2";
+			ipAddr = "192.168.1.4";
 			serverPort = 8083;
 		}
 		
