@@ -23,6 +23,7 @@ import com.ab.core.pojo.MyTransaction;
 import com.ab.core.pojo.UserMoney;
 import com.ab.core.pojo.UsersCompleteMoneyDetails;
 import com.ab.core.tasks.AddTransactionsTask;
+import com.ab.core.tasks.UserAccumulatedUpdateTask;
 
 
 
@@ -120,10 +121,8 @@ public class MoneyUpdater {
 		
 		List<Integer> moneyUpdateResults = bulkUpdate();
 		
-		UserMoneyDBHandler.getInstance().updateUsersMoneyEntriesInBatch(userIdVsReferMoney, 50, 
-				UserMoneyDBHandler.UPDATE_REFERMONEY_BY_USER_ID, "REFER");
-		UserMoneyDBHandler.getInstance().updateUsersMoneyEntriesInBatch(userIdVsWinMoney, 50, 
-				UserMoneyDBHandler.UPDATE_WINMONEY_BY_USER_ID, "WIN");
+		UserAccumulatedUpdateTask run = new UserAccumulatedUpdateTask(userIdVsWinMoney, userIdVsReferMoney);
+		SingleThreadMoneyUpdater.getInstance().submit(run);
 		
 		clearStates();
 		

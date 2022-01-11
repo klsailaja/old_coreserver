@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ab.core.db.UserAccumulatedResultsDBHandler;
 import com.ab.core.exceptions.InternalException;
 import com.ab.core.exceptions.NotAllowedException;
 import com.ab.core.handlers.UserMoneyHandler;
@@ -36,6 +37,21 @@ public class UserMoneyController extends BaseController {
 		} catch (SQLException ex) {
 			logger.error("Exception in getUserMoney", ex);
 			throw new InternalException("Server Error in getUserMoney");
+		}
+	}
+	
+	@RequestMapping(value = "/fullmoney/{userProfileId}", method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody UserMoney getFullUserMoney(@PathVariable("userProfileId") long userProfileId) 
+			throws InternalException, NotAllowedException {
+		try {
+			UserMoney userMoney = UserMoneyHandler.getInstance().getUserMoney(userProfileId);
+			long[] userAccumulatedResults = UserAccumulatedResultsDBHandler.getInstance().getAccumulatedResults(userProfileId);
+			userMoney.setWinAmount(userAccumulatedResults[0]);
+			userMoney.setReferAmount(userAccumulatedResults[1]);
+			return userMoney;
+		} catch (Exception ex) {
+			logger.error("Exception in getFullMoneyTask", ex);
+			throw new InternalException("Server Error in getFullMoneyTask");
 		}
 	}
 	

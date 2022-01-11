@@ -6,7 +6,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,32 +31,24 @@ public class UserMoneyDBHandler {
 	private static final Logger logger = LogManager.getLogger(UserMoneyDBHandler.class);
 	// create a record
 	// get the record
-	// update 
-	public static String ID = "id";
+	// update
+	public static String TABLE_NAME = "USERMONEY";
+	public static String ID = "ID";
 	public static String BALANCE = "BALANCE";
 	public static String BALANCE_LOCKED = "BALANCELOCKED";
-	public static String WINMONEY = "WINMONEY";
-	public static String REFERMONEY = "REFERMONEY";
-	public static String TABLE_NAME = "USERMONEY"; 
+	 
 	
 	private static UserMoneyDBHandler instance = null;
 	
 	private static final String CREATE_MONEY_ENTRY = "INSERT INTO " + TABLE_NAME 
 			+ "(" + ID + "," + BALANCE + "," + BALANCE_LOCKED + ","
-			+ WINMONEY + "," + REFERMONEY  
-			+ ") VALUES" + "(?,?,?,?,?)";
+			+ ") VALUES" + "(?,?,?)";
 	
 	public static final String GET_MONEY_ENTRY_BY_USER_ID = "SELECT * FROM " + TABLE_NAME + " WHERE " 
 			+ ID + " = ?";
 	
 	public static final String UPDATE_BALANCE_AMOUNT_BY_USER_ID = "UPDATE " + TABLE_NAME + " SET " 
 			+ BALANCE + " = " + BALANCE  + " + ? WHERE " + ID + " = ? ";
-	
-	public static final String UPDATE_WINMONEY_BY_USER_ID = "UPDATE " + TABLE_NAME + " SET "
-			+ WINMONEY + " = " + WINMONEY + " + ? WHERE " + ID + " = ? ";
-	
-	public static final String UPDATE_REFERMONEY_BY_USER_ID = "UPDATE " + TABLE_NAME + " SET "
-			+ REFERMONEY + " = " + REFERMONEY + " + ? WHERE " + ID + " = ? ";
 	
 	public static final String WITHDRAW_BALANCE_AMOUNT_BY_USER_ID = "UPDATE " + TABLE_NAME + " SET " 
 			+ BALANCE + " = " + BALANCE + " + ? , "
@@ -82,83 +73,7 @@ public class UserMoneyDBHandler {
 		}
 		return instance;
 	}
-	
-	public void updateUsersMoneyEntriesInBatch(Map<Long, Long> userIdVsMoney, int batchSize, String sqlQry, String recordType) 
-			throws SQLException {
-
-		if (userIdVsMoney.size() == 0) {
-			return;
-		}
-	
-		logger.info("This is in updateUsersMoneyEntriesInBatch with records size {} and type {}", userIdVsMoney.size(),
-				recordType);
 		
-		ConnectionPool cp = null;
-		Connection dbConn = null;
-		PreparedStatement ps = null;
-		
-		int totalFailureCount = 0;
-		int totalSuccessCount = 0;
-		
-		try {
-			cp = ConnectionPool.getInstance();
-			dbConn = cp.getDBConnection();
-			dbConn.setAutoCommit(false);
-			
-			ps = dbConn.prepareStatement(sqlQry);
-			
-			int index = 0;
-			for (Map.Entry<Long, Long> entry : userIdVsMoney.entrySet()) {
-				long userId = entry.getKey();
-				long winAmt = entry.getValue();
-			
-				ps.setLong(1, (long)winAmt);
-				ps.setLong(2, userId);
-				
-				ps.addBatch();
-				index++;
-				
-				if (index % batchSize == 0) {
-					int results[] = ps.executeBatch();
-					dbConn.setAutoCommit(false);
-					dbConn.commit();
-					for (int result : results) {
-						if (result == 1) {
-							++totalSuccessCount;
-						} else {
-							++totalFailureCount;
-						}
-					}
-				}
-				if (index > 0) {
-					int results[] = ps.executeBatch();
-					dbConn.setAutoCommit(false);
-					dbConn.commit();
-					for (int result : results) {
-						if (result == 1) {
-							++totalSuccessCount;
-						} else {
-							++totalFailureCount;
-						}
-					}
-				}
-			}
-			logger.info("End of updateUsersMoneyEntriesInBatch with success row count {} : failure row count {}", totalSuccessCount, totalFailureCount);
-		} catch(SQLException ex) {
-			logger.error("******************************");
-			logger.error("Error in updateUsersMoneyEntriesInBatch in bulk mode", ex);
-			logger.error("******************************");
-			throw ex;
-		} finally {
-			if (ps != null) {
-				ps.close();
-			}
-			if (dbConn != null) {
-				dbConn.close();
-			}
-		}
-	}
-	
 	public void testCreateMoneyInBatch(List<UserMoney> userMoneyList, int batchSize) throws SQLException {
 		
 		System.out.println("In testCreateMoneyInBatch with size " +  userMoneyList.size() + " batch size " + batchSize);
@@ -183,8 +98,6 @@ public class UserMoneyDBHandler {
 				ps.setLong(1, userMoney.getId());
 				ps.setLong(2, userMoney.getAmount());
 				ps.setLong(3, userMoney.getAmtLocked());
-				ps.setLong(4, userMoney.getWinAmount());
-				ps.setLong(5, userMoney.getReferAmount());
 			
 				ps.addBatch();
 				index++;
@@ -246,8 +159,6 @@ public class UserMoneyDBHandler {
 			ps.setLong(1, userMoney.getId());
 			ps.setLong(2, userMoney.getAmount());
 			ps.setLong(3, userMoney.getAmtLocked());
-			ps.setLong(4, userMoney.getWinAmount());
-			ps.setLong(5, userMoney.getReferAmount());
 			
 			int result = ps.executeUpdate();
 			logger.info("createUserMoney with id {} result is {}", userMoney.getId(), (result > 0));
@@ -290,8 +201,6 @@ public class UserMoneyDBHandler {
 					userMoney.setId(rs.getLong(ID));
 					userMoney.setAmount(rs.getLong(BALANCE));
 					userMoney.setAmtLocked(rs.getLong(BALANCE_LOCKED));
-					userMoney.setWinAmount(rs.getLong(WINMONEY));
-					userMoney.setReferAmount(rs.getLong(REFERMONEY));
 				}
 			}
 		} catch (SQLException ex) {

@@ -63,6 +63,9 @@ public class UserMoneyHandler {
 			if (moneyTransaction.getAmount() > userMoney.getAmount()) {
 				throw new NotAllowedException("No Enough Cash. Please add money");
 			}
+			if (moneyTransaction.getAmount() > 10000) {
+				throw new NotAllowedException("Please raise withdraw request. Amount exceeds max limit.");
+			}
 		}
 		
 		UserMoneyUpdateProcessorTask moneyProcessorTask = new UserMoneyUpdateProcessorTask(usersMoneyDetails);

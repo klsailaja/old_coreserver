@@ -21,6 +21,7 @@ import com.ab.core.exceptions.NotAllowedException;
 import com.ab.core.handlers.UserProfileHandler;
 import com.ab.core.pojo.Mail;
 import com.ab.core.pojo.ReferalDetails;
+import com.ab.core.pojo.UserAccumulatedResults;
 import com.ab.core.pojo.UserMoney;
 import com.ab.core.pojo.UserProfile;
 import com.ab.core.pojo.UserReferal;
@@ -242,6 +243,13 @@ public class UserProfileDBHandler {
 					
 					UserMoney userMoneyObject = new UserMoney(userProfileId, initialLoadedMoney, 0, 0, 0);
 					UserMoneyDBHandler.getInstance().createUserMoney(userMoneyObject);
+					
+					UserAccumulatedResults obj = new UserAccumulatedResults();
+					obj.setUid(userProfileId);
+					obj.setWinAmount(0);
+					obj.setReferAmount(0);
+					UserAccumulatedResultsDBHandler.getInstance().createInitialEntries(obj, 3);
+
 					
 					VerifyUserProfile.getInstance().deleteOTPRecord(userProfile.getEmailAddress());
 					

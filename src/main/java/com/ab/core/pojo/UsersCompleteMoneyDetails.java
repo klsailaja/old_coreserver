@@ -6,6 +6,7 @@ public class UsersCompleteMoneyDetails {
 	private String trackStatusKey;
 	private boolean checkMoney;
 	private List<MoneyTransaction> usersMoneyTransactionList;
+	private int kycDocsStatus;  // 1 means approved
 	
 	public boolean isCheckMoney() {
 		return checkMoney;
@@ -19,6 +20,12 @@ public class UsersCompleteMoneyDetails {
 	}
 	public void setUsersMoneyTransactionList(List<MoneyTransaction> usersMoneyTransactionList) {
 		this.usersMoneyTransactionList = usersMoneyTransactionList;
+	}
+	public int getkycDocsStatus() {
+		return kycDocsStatus;
+	}
+	public void setkycDocsStatus(int kycDocsStatus) {
+		this.kycDocsStatus = kycDocsStatus;
 	}
 	public String getTrackStatusKey() {
 		return trackStatusKey;

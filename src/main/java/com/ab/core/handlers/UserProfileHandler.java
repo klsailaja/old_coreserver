@@ -10,11 +10,13 @@ import org.apache.logging.log4j.Logger;
 import com.ab.core.constants.QuizConstants;
 import com.ab.core.db.MyTransactionDBHandler;
 import com.ab.core.db.ReferalDBHandler;
+import com.ab.core.db.UserAccumulatedResultsDBHandler;
 import com.ab.core.db.UserProfileDBHandler;
 import com.ab.core.exceptions.NotAllowedException;
 import com.ab.core.pojo.LoginData;
 import com.ab.core.pojo.ReferalDetails;
 import com.ab.core.pojo.TransactionsHolder;
+import com.ab.core.pojo.UserAccumulatedResults;
 import com.ab.core.pojo.UserProfile;
 
 public class UserProfileHandler {
