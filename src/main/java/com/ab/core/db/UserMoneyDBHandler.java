@@ -22,8 +22,6 @@ import com.ab.core.pojo.UserMoney;
 CREATE TABLE USERMONEY (ID BIGINT UNSIGNED NOT NULL, 
 		BALANCE BIGINT, 
 		BALANCELOCKED BIGINT,
-		WINMONEY BIGINT,
-		REFERMONEY BIGINT, 
 		PRIMARY KEY (ID)) ENGINE = INNODB;
 */
 
@@ -41,7 +39,7 @@ public class UserMoneyDBHandler {
 	private static UserMoneyDBHandler instance = null;
 	
 	private static final String CREATE_MONEY_ENTRY = "INSERT INTO " + TABLE_NAME 
-			+ "(" + ID + "," + BALANCE + "," + BALANCE_LOCKED + ","
+			+ "(" + ID + "," + BALANCE + "," + BALANCE_LOCKED 
 			+ ") VALUES" + "(?,?,?)";
 	
 	public static final String GET_MONEY_ENTRY_BY_USER_ID = "SELECT * FROM " + TABLE_NAME + " WHERE " 
