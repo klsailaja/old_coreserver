@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,8 +37,6 @@ public class MoneyUpdater {
 	private Map<Long, Long> userIdVsWinMoney = new HashMap<>();
 	private Map<Long, Long> userIdVsReferMoney = new HashMap<>();
 	
-	private Map<String,Integer> serverIdVsGameSlotCompleteStatus = new HashMap<>();
-	
 	private MoneyUpdater() {
 	}
 	
@@ -62,6 +58,8 @@ public class MoneyUpdater {
 	public synchronized List<Integer> performTransactions(UsersCompleteMoneyDetails usersMoneyDetails) throws SQLException {
 		
 		long startTime = System.currentTimeMillis();
+		
+		WinnersMoneyUpdateStatus.getInstance().createEntry(usersMoneyDetails.getTrackStatusKey());
 		
 		fetchUserMoneyObjectsFromDB(usersMoneyDetails);
 		
@@ -126,7 +124,7 @@ public class MoneyUpdater {
 		
 		clearStates();
 		
-		setGameSlotStatusToComplete(usersMoneyDetails.getTrackStatusKey());
+		WinnersMoneyUpdateStatus.getInstance().setStatusToComplete(usersMoneyDetails.getTrackStatusKey());
 		
 		logger.info("Total Time in MoneyUpdater performTransactions {}", (System.currentTimeMillis() - startTime));
 		
@@ -317,40 +315,5 @@ public class MoneyUpdater {
 		}
 		
 		logger.info("After size {}", userIdVsUserMoney.size());
-	}
-	
-	private void setGameSlotStatusToComplete(String trackKey) {
-		if (trackKey == null) {
-			return;
-		}
-		StringTokenizer strTokenizer = new StringTokenizer(trackKey, "-");
-		String serverIdKey = strTokenizer.nextToken();
-	
-		Set<Map.Entry<String,Integer>> s = serverIdVsGameSlotCompleteStatus.entrySet();
-		
-		List<String> toDelKeys = new ArrayList<>();
-        
-        for (Map.Entry<String, Integer> it: s)
-        {
-        	String mapKey = it.getKey();
-        	strTokenizer = new StringTokenizer(mapKey, "-");
-        	String mapServerKey = strTokenizer.nextToken();
-        	if (mapServerKey.equals(serverIdKey)) {
-        		toDelKeys.add(mapKey);
-        	}
-        }
-        for (String delKey : toDelKeys) {
-        	serverIdVsGameSlotCompleteStatus.remove(delKey);
-        }
-        
-		serverIdVsGameSlotCompleteStatus.put(trackKey, 1);
-	}
-	
-	public int getGameSlotStatus(String trackKey) {
-		Integer state = serverIdVsGameSlotCompleteStatus.get(trackKey);
-		if (state == null) {
-			return 0;
-		}
-		return state;
 	}
 }

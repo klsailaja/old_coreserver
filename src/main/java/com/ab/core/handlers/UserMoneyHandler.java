@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.ab.core.common.LazyScheduler;
+import com.ab.core.constants.QuizConstants;
 import com.ab.core.constants.WithdrawReqState;
 import com.ab.core.db.ConnectionPool;
 import com.ab.core.db.UserMoneyDBHandler;
@@ -63,7 +64,7 @@ public class UserMoneyHandler {
 			if (moneyTransaction.getAmount() > userMoney.getAmount()) {
 				throw new NotAllowedException("No Enough Cash. Please add money");
 			}
-			if (moneyTransaction.getAmount() > 10000) {
+			if (userMoney.getAmount() > QuizConstants.MAX_BALANCE_ALLOWED) {
 				throw new NotAllowedException("Please raise withdraw request. Amount exceeds max limit.");
 			}
 		}

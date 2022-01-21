@@ -16,7 +16,8 @@ import com.ab.core.db.UserAccumulatedResultsDBHandler;
 import com.ab.core.exceptions.InternalException;
 import com.ab.core.exceptions.NotAllowedException;
 import com.ab.core.handlers.UserMoneyHandler;
-import com.ab.core.helper.MoneyUpdater;
+import com.ab.core.helper.WinnersMoneyUpdateStatus;
+import com.ab.core.pojo.SlotGamesWinMoneyStatus;
 import com.ab.core.pojo.UserMoney;
 import com.ab.core.pojo.UsersCompleteMoneyDetails;
 import com.ab.core.pojo.WithdrawMoney;
@@ -78,8 +79,9 @@ public class UserMoneyController extends BaseController {
 		}
 	}
 	
-	@RequestMapping(value = "/money/update/{trackKey}", method = RequestMethod.GET, produces = "application/json")
-	public @ResponseBody int getGamesSlotMoneyStatus(@PathVariable("trackKey") String trackKey) throws InternalException {
-		return MoneyUpdater.getInstance().getGameSlotStatus(trackKey);
+	@RequestMapping(value = "/money/update/{serverId}", method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody List<SlotGamesWinMoneyStatus> getGamesSlotMoneyStatus(@PathVariable("serverId") String serverId) 
+			throws InternalException {
+		return WinnersMoneyUpdateStatus.getInstance().getServerIdStatus(serverId);
 	}
 }

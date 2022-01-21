@@ -4,7 +4,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
@@ -55,7 +57,7 @@ public class UserAccumulatedResultsDBHandler {
 	private static UserAccumulatedResultsDBHandler instance = null;
 	
 	private static final String CREATE_MONEY_ENTRY = "INSERT INTO " + TABLE_NAME 
-			+ "(" + ID + "," + USERID + "," + YEAR_INDEX + ","
+			+ "(" + USERID + "," + YEAR_INDEX + ","
 			+ WINMONEY + "," + REFERMONEY  
 			+ ") VALUES" + "(?,?,?,?)";
 	
@@ -108,6 +110,91 @@ public class UserAccumulatedResultsDBHandler {
 			logger.error("******************************");
 			logger.error("Error creating UserAccumulatedResults for id {} ", obj.getUid());
 			logger.error("The Exception is", ex);
+			logger.error("******************************");
+			throw ex;
+		} finally {
+			if (ps != null) {
+				ps.close();
+			}
+			if (dbConn != null) {
+				dbConn.close();
+			}
+		}
+	}
+	
+	public List<UserAccumulatedResults> getAllUserEntries(long uid, int maxRows) {
+		
+		int[] yearIndices = getYearIndices(maxRows);
+		List<UserAccumulatedResults> list = new ArrayList<>();
+		for (int i = 0; i < maxRows; i++) {
+			UserAccumulatedResults obj = new UserAccumulatedResults();
+			obj.setUid(uid);
+			obj.setWinAmount(0);
+			obj.setReferAmount(0);
+			obj.setYearIndex(yearIndices[i]);
+			list.add(obj);
+		}
+		return list;
+	}
+	
+	public void testCreateAccInBatch(List<UserAccumulatedResults> userAccList, int batchSize) throws SQLException {
+		
+		System.out.println("In testCreateAccInBatch with size " +  userAccList.size() + " batch size " + batchSize);
+		
+		ConnectionPool cp = null;
+		Connection dbConn = null;
+		PreparedStatement ps = null;
+		
+		int totalFailureCount = 0;
+		int totalSuccessCount = 0;
+		
+		try {
+			cp = ConnectionPool.getInstance();
+			dbConn = cp.getDBConnection();
+			dbConn.setAutoCommit(false);
+			
+			ps = dbConn.prepareStatement(CREATE_MONEY_ENTRY);
+			
+			int index = 0;
+			for (UserAccumulatedResults obj : userAccList) {
+				
+				ps.setLong(1, obj.getUid());
+				ps.setInt(2, obj.getYearIndex());
+				ps.setLong(3, obj.getWinAmount());
+				ps.setLong(4, obj.getReferAmount());
+			
+				ps.addBatch();
+				index++;
+				
+				if (index % batchSize == 0) {
+					int results[] = ps.executeBatch();
+					dbConn.setAutoCommit(false);
+					dbConn.commit();
+					for (int result : results) {
+						if (result == 1) {
+							++totalSuccessCount;
+						} else {
+							++totalFailureCount;
+						}
+					}
+				}
+			}
+			if (index > 0) {
+				int results[] = ps.executeBatch();
+				dbConn.setAutoCommit(false);
+				dbConn.commit();
+				for (int result : results) {
+					if (result == 1) {
+						++totalSuccessCount;
+					} else {
+						++totalFailureCount;
+					}
+				}
+			}
+			logger.info("End of testCreateAccInBatch with success row count {} : failure row count {}", totalSuccessCount, totalFailureCount);
+		} catch(SQLException ex) {
+			logger.error("******************************");
+			logger.error("Error in creating user accumulated list in bulk mode", ex);
 			logger.error("******************************");
 			throw ex;
 		} finally {

@@ -13,6 +13,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import com.ab.core.common.LazyScheduler;
 import com.ab.core.constants.QuizConstants;
 import com.ab.core.helper.LoggedInUsersCountManager;
+import com.ab.core.tasks.DeleteGameMoneyCreditedStatus;
 import com.ab.core.tasks.DeleteOldRecords;
 import com.ab.core.tasks.LoggedInUsersCountTask;
 
@@ -41,6 +42,7 @@ public class CoreQuizServerApplication implements ApplicationRunner {
 		
 		LazyScheduler.getInstance().submitRepeatedTask(new DeleteOldRecords(), initialDelay, 
 				24 * 60 * 1000, TimeUnit.MILLISECONDS);
+		LazyScheduler.getInstance().submitRepeatedTask(new DeleteGameMoneyCreditedStatus(), 0, 15 * 60 * 1000, TimeUnit.MILLISECONDS);
 		
 		long gapBetweenServerInstances = 2 * 60 * 1000;
 		long gap = 0;

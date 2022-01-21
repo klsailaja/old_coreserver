@@ -804,7 +804,7 @@ public class UserProfileDBHandler {
 			userProfile.setName("testuser" + index);
 			userProfile.setPasswordHash("25d19baaef913d50b6a8e302909507b8059c6410a1c8d7e1a844d6069732202e");
 			
-			String bossReferId = "RAJASEKHAR21";
+			String bossReferId = "RAJASEKH21";
 			/*if (index > 1000) {
 				bossReferId = "TEST" + (index - 1);
 			}*/
@@ -859,6 +859,29 @@ public class UserProfileDBHandler {
 					userMoneys.clear();
 				}
 				
+			} else {
+				//userMoneyDBHandler.createUserMoney(userMoney);
+			}
+			totalRecCount++;
+			if ((totalRecCount % 100) == 0) {
+				System.out.println("TC :" + totalRecCount);
+			}
+		}
+		if (batchMode) {
+			//userMoneyDBHandler.testCreateMoneyInBatch(userMoneys, 200);
+		}
+		
+		
+		List<UserAccumulatedResults> userAccResults = new ArrayList<>();
+		totalRecCount = 0;
+		for (int index = 1; index <= total; index ++) {
+			userAccResults.addAll(UserAccumulatedResultsDBHandler.getInstance().getAllUserEntries(index, 3));
+			
+			if (batchMode) {
+				if (userAccResults.size() > 200) {
+					UserAccumulatedResultsDBHandler.getInstance().testCreateAccInBatch(userAccResults, 200);
+					userAccResults.clear();
+				}
 			} else {
 				//userMoneyDBHandler.createUserMoney(userMoney);
 			}
