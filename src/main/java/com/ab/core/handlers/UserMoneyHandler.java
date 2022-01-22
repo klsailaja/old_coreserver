@@ -16,6 +16,7 @@ import com.ab.core.db.ConnectionPool;
 import com.ab.core.db.UserMoneyDBHandler;
 import com.ab.core.exceptions.NotAllowedException;
 import com.ab.core.helper.SingleThreadMoneyUpdater;
+import com.ab.core.helper.WinnersMoneyUpdateStatus;
 import com.ab.core.pojo.MoneyTransaction;
 import com.ab.core.pojo.MyTransaction;
 import com.ab.core.pojo.UserMoney;
@@ -74,6 +75,8 @@ public class UserMoneyHandler {
 		if (trackKey == null) {
 			moneyProcessorTask.run();
 			return moneyProcessorTask.getMoneyUpdateResults();
+		} else {
+			WinnersMoneyUpdateStatus.getInstance().createEntry(usersMoneyDetails.getTrackStatusKey());
 		}
 		
 		SingleThreadMoneyUpdater.getInstance().submit(moneyProcessorTask);

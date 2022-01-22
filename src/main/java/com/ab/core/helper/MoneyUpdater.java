@@ -59,8 +59,6 @@ public class MoneyUpdater {
 		
 		long startTime = System.currentTimeMillis();
 		
-		WinnersMoneyUpdateStatus.getInstance().createEntry(usersMoneyDetails.getTrackStatusKey());
-		
 		fetchUserMoneyObjectsFromDB(usersMoneyDetails);
 		
 		for (Long userId : loadUserIds) {
