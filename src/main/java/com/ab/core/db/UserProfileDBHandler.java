@@ -95,8 +95,8 @@ public class UserProfileDBHandler {
 	
 	private static final int LAST_LOGGED_IN_TIME_DIFF = 15;
 	private static final long LAST_LOGGED_IN_TIME_DIFF_IN_MILLIS = LAST_LOGGED_IN_TIME_DIFF * 60 * 1000; 
-	private static final String GET_LOGGED_IN_USERS_COUNT = "SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE (" + LASTLOGGEDDATE 
-			+ "- ?) < " + LAST_LOGGED_IN_TIME_DIFF_IN_MILLIS + " AND (" + ID + " >= " + " ? ) AND (" + ID + " <= " + "?)"; 
+	private static final String GET_LOGGED_IN_USERS_COUNT = "SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE (?" 
+			+ "- LASTLOGGEDDATE) <= " + LAST_LOGGED_IN_TIME_DIFF_IN_MILLIS + " AND (" + ID + " >= " + "?) AND (" + ID + " <= " + "?)"; 
 	
 	
 	private static final String SOURCE = "0123456789"; //ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz 
@@ -396,6 +396,7 @@ public class UserProfileDBHandler {
 		totalPs.setLong(1, System.currentTimeMillis());
 		totalPs.setLong(2, serverRangeStart);
 		totalPs.setLong(3, serverRangeEnd);
+		logger.info("**************In getLoggedInUsersCount: {}", totalPs.toString());
 		
 		ResultSet totalRs = null;
 		long total = 0;

@@ -3,6 +3,7 @@ package com.ab.core;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,10 +30,12 @@ import com.ab.core.pojo.Mail;
 import com.ab.core.pojo.OTPDetails;
 import com.ab.core.pojo.ReferalDetails;
 import com.ab.core.pojo.TransactionsHolder;
+import com.ab.core.pojo.UpdateTime;
 import com.ab.core.pojo.UserNetwork;
 import com.ab.core.pojo.UserProfile;
 import com.ab.core.tasks.LoggedInUsersCountTask;
 import com.ab.core.tasks.SendMailTask;
+import com.ab.core.tasks.UpdateLastLoggedInTimeTask;
 
 @RestController
 public class UserProfileController extends BaseController {
@@ -152,6 +155,12 @@ public class UserProfileController extends BaseController {
 			logger.error("Exception in forgotPassword", ex);
 			throw new InternalException("Server Error in forgotPassword");
 		}
+	}
+	
+	@RequestMapping(value = "/updatetime", method = RequestMethod.POST, produces = "application/json")
+	public @ResponseBody String updateLastLoggedInTime(@RequestBody UpdateTime updateLastLoggedInTime) {
+		LazyScheduler.getInstance().submit(new UpdateLastLoggedInTimeTask(updateLastLoggedInTime.getUserIds()), 2, TimeUnit.MINUTES);
+		return "true";
 	}
 	
 	// Tested.
