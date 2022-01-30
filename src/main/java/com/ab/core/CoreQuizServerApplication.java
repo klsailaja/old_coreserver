@@ -1,5 +1,6 @@
 package com.ab.core;
 
+import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 
@@ -12,7 +13,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.ab.core.common.LazyScheduler;
 import com.ab.core.constants.QuizConstants;
+import com.ab.core.db.ConnectionPool;
 import com.ab.core.helper.LoggedInUsersCountManager;
+import com.ab.core.helper.WinMsgHandler;
 import com.ab.core.tasks.DeleteGameMoneyCreditedStatus;
 import com.ab.core.tasks.DeleteOldRecords;
 import com.ab.core.tasks.LoggedInUsersCountTask;
@@ -30,6 +33,15 @@ public class CoreQuizServerApplication implements ApplicationRunner {
 	public void run(ApplicationArguments args) {
 		
 		logger.info("This is in CoreQuizServerApplication");
+		
+		try {
+			ConnectionPool.getInstance();
+		} catch (SQLException e) {
+			logger.error("************************");
+			logger.error("SQLException while initilizing ConnectionPool", e);
+		}
+		
+		
 		Calendar calendar = Calendar.getInstance();
 		calendar.add(Calendar.DATE, 1);
 		calendar.set(Calendar.HOUR, 3);
@@ -43,6 +55,8 @@ public class CoreQuizServerApplication implements ApplicationRunner {
 		LazyScheduler.getInstance().submitRepeatedTask(new DeleteOldRecords(), initialDelay, 
 				24 * 60 * 1000, TimeUnit.MILLISECONDS);
 		LazyScheduler.getInstance().submitRepeatedTask(new DeleteGameMoneyCreditedStatus(), 0, 15 * 60 * 1000, TimeUnit.MILLISECONDS);
+		
+		WinMsgHandler.getInstance();
 		
 		long gapBetweenServerInstances = 2 * 60 * 1000;
 		long gap = 0;

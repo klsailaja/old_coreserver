@@ -39,8 +39,8 @@ public class ConnectionPool {
     	return myconnectionPool.getConnectionNotFromPool();
     }
     
-
     /*public GenericObjectPool<PoolableConnection> getConnectionPool() {
+
         return gPool;
     }
  
