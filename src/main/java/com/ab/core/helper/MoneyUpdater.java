@@ -34,8 +34,6 @@ public class MoneyUpdater {
 	private Map<Long, UserMoney> userIdVsUserMoney = new HashMap<>();
 	private Map<Long, List<MoneyTransaction>> userIdVsCurrentTransactions = new HashMap<>();
 	private List<Long> loadUserIds = new ArrayList<>();
-	private Map<Long, Long> userIdVsWinMoney = new HashMap<>();
-	private Map<Long, Long> userIdVsReferMoney = new HashMap<>();
 	
 	private MoneyUpdater() {
 	}
@@ -51,14 +49,15 @@ public class MoneyUpdater {
 		userIdVsUserMoney.clear();
 		userIdVsCurrentTransactions.clear();
 		loadUserIds.clear();
-		userIdVsWinMoney.clear();
-		userIdVsReferMoney.clear();
 	}
 	
 	public synchronized List<Integer> performTransactions(UsersCompleteMoneyDetails usersMoneyDetails) throws SQLException {
 		
 		long startTime = System.currentTimeMillis();
 		
+		Map<Long, Long> userIdVsWinMoney = new HashMap<>();
+		Map<Long, Long> userIdVsReferMoney = new HashMap<>();
+
 		fetchUserMoneyObjectsFromDB(usersMoneyDetails);
 		
 		for (Long userId : loadUserIds) {
@@ -91,18 +90,10 @@ public class MoneyUpdater {
 				moneyTran.getTransaction().setClosingBalance(userCB);
 				userOB = userCB;
 				
-				switch (userAccountType) {
-					case WINNING_MONEY: {
-						userWinMoney = userWinMoney + moneyTran.getAmount(); 
-						break;
-					}
-					case REFERAL_MONEY: {
-						userReferMoney = userReferMoney + moneyTran.getAmount();
-						break;
-					}
-					case LOADED_MONEY: {
-						break;
-					}
+				if (userAccountType == UserMoneyAccountType.WINNING_MONEY) {
+					userWinMoney = userWinMoney + moneyTran.getAmount();
+				} else if (userAccountType == UserMoneyAccountType.REFERAL_MONEY) {
+					userReferMoney = userReferMoney + moneyTran.getAmount();
 				}
 			}
 	
@@ -116,6 +107,9 @@ public class MoneyUpdater {
 		}
 		
 		List<Integer> moneyUpdateResults = bulkUpdate();
+		
+		logger.info("userIdVsWinMoney : {}", userIdVsWinMoney);
+		logger.info("userIdVsReferMoney : {}", userIdVsReferMoney);
 		
 		UserAccumulatedUpdateTask run = new UserAccumulatedUpdateTask(userIdVsWinMoney, userIdVsReferMoney);
 		SingleThreadMoneyUpdater.getInstance().submit(run);
