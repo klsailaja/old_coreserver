@@ -1,12 +1,22 @@
 package com.ab.core;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.BufferedInputStream;
+import java.net.URLConnection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -41,6 +51,58 @@ import com.ab.core.tasks.UpdateLastLoggedInTimeTask;
 public class UserProfileController extends BaseController {
 	
 	private static final Logger logger = LogManager.getLogger(UserProfileController.class);
+	
+	private static final String EXTERNAL_FILE_PATH = "D:" + File.separator + "Projects" + File.separator + "Games" +
+			File.separator + "terms-and-conditions.pdf"; 
+
+	@RequestMapping("/terms")
+	public void downloadPDFResource(HttpServletRequest request, HttpServletResponse response) 
+			throws InternalException {
+		
+		logger.info("File exists in downloadPDFResource");
+		try {
+		
+			File file = new File(EXTERNAL_FILE_PATH);
+			logger.info(file.getAbsolutePath());
+			if (file.exists()) {
+				//get the mimetype
+				logger.info("File exists");
+				String mimeType = URLConnection.guessContentTypeFromName(file.getName());
+				if (mimeType == null) {
+					//unknown mimetype so set the mimetype to application/octet-stream
+					mimeType = "application/octet-stream";
+				}
+	
+				logger.info("File exists" + mimeType);
+				response.setContentType(mimeType);
+	
+				/**
+				 * In a regular HTTP response, the Content-Disposition response header is a
+				 * header indicating if the content is expected to be displayed inline in the
+				 * browser, that is, as a Web page or as part of a Web page, or as an
+				 * attachment, that is downloaded and saved locally.
+				 * 
+				 */
+	
+				/**
+				 * Here we have mentioned it to show inline
+				 */
+				response.setHeader("Content-Disposition", String.format("inline; filename=\"" + file.getName() + "\""));
+	
+				//Here we have mentioned it to show as attachment
+				//response.setHeader("Content-Disposition", String.format("attachment; filename=\"" + file.getName() + "\""));
+	
+				response.setContentLength((int) file.length());
+	
+				InputStream inputStream = new BufferedInputStream(new FileInputStream(file));
+	
+				FileCopyUtils.copy(inputStream, response.getOutputStream());
+			}
+		} catch(IOException ex) {
+			logger.error("IOException at ", ex);
+		}
+	}
+	
 	
 	@RequestMapping(value = "/loggedin/count/{serverIndex}", method = RequestMethod.GET, produces = "application/json") 
 	public @ResponseBody long getLoggedInUserCount(@PathVariable("serverIndex") int serverIndex) throws InternalException {
