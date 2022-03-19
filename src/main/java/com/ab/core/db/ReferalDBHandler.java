@@ -118,7 +118,7 @@ public class ReferalDBHandler {
 	}
 	
 	public boolean updateMaxCount(long maxCount) throws SQLException {
-		
+		logger.info("In updateMaxCount {}", maxCount);
 		ConnectionPool cp = ConnectionPool.getInstance();
 		Connection dbConn = cp.getDBConnection();
 		PreparedStatement ps = dbConn.prepareStatement(UPDATE_MAXID_ENTRY_BY_ID);

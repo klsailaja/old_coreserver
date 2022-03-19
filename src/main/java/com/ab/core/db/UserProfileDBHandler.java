@@ -19,6 +19,7 @@ import com.ab.core.common.LazyScheduler;
 import com.ab.core.constants.QuizConstants;
 import com.ab.core.exceptions.NotAllowedException;
 import com.ab.core.handlers.UserProfileHandler;
+import com.ab.core.helper.Utils;
 import com.ab.core.pojo.Mail;
 import com.ab.core.pojo.ReferalDetails;
 import com.ab.core.pojo.UserAccumulatedResults;
@@ -42,9 +43,12 @@ CREATE TABLE USERPROFILE(ID BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
         CREATEDDATE BIGINT,
         LASTLOGGEDDATE BIGINT, PRIMARY KEY (ID)) ENGINE = INNODB;
         
-CREATE INDEX UserProfile_Inx ON USERPROFILE(mailId);        
+CREATE INDEX UserProfile_Inx ON USERPROFILE(MAILID);        
 DROP INDEX UserProfile_Inx ON USERPROFILE;        
-CREATE INDEX UserProfile_Inx ON USERPROFILE(mailId);
+CREATE INDEX UserProfile_Inx ON USERPROFILE(MAILID);
+CREATE INDEX UserProfile_Inx1 ON USERPROFILE(REFERREDID);        
+DROP INDEX UserProfile_Inx1 ON USERPROFILE;        
+CREATE INDEX UserProfile_Inx1 ON USERPROFILE(REFERREDID);
 */
 
 public class UserProfileDBHandler {
@@ -203,7 +207,7 @@ public class UserProfileDBHandler {
 		if (userName.length() >= remainingLen) {
 			userName = userName.substring(0, remainingLen);
 		}
-		String userIdStr = userName + String.valueOf(maxUseId); 
+		String userIdStr = userName + Utils.getReferalCodeStrNotion(maxUseId); 
 		userProfile.setMyReferalId(userIdStr);
 		logger.debug("Max referal id formed is {}", userIdStr);
 		
@@ -253,7 +257,8 @@ public class UserProfileDBHandler {
 					
 					VerifyUserProfile.getInstance().deleteOTPRecord(userProfile.getEmailAddress());
 					
-					ReferalDBHandler.getInstance().updateMaxCount(userProfileId);
+					boolean maxCountUpdateResult = ReferalDBHandler.getInstance().updateMaxCount(userProfileId);
+					logger.info("The result of update the max user id count is {} and {}", userProfileId, maxCountUpdateResult);
 				}
 			}
 		} catch(SQLException ex) {
@@ -739,7 +744,7 @@ public class UserProfileDBHandler {
 		UserProfileDBHandler dbHandler = UserProfileDBHandler.getInstance();
 		
 		UserMoneyDBHandler userMoneyDBHandler = UserMoneyDBHandler.getInstance();
-		long total = 30000;
+		long total = 100;
 		boolean batchMode = true;
 		long totalRecCount = 0;
 		
@@ -757,19 +762,19 @@ public class UserProfileDBHandler {
 			userProfile.setLastLoggedDate(1609861020944L);
 			
 			int idStrLen = String.valueOf(index).length();
-			int remainingLen = 8 - idStrLen;
+			int remainingLen = 10 - idStrLen;
 			String userName = userProfile.getName().toUpperCase();
 			if (userName.length() >= remainingLen) {
 				userName = userName.substring(0, remainingLen);
 			}
-			String userIdStr = userName + String.valueOf(index); 
+			String userIdStr = userName + Utils.getReferalCodeStrNotion(index); 
 			userProfile.setMyReferalId(userIdStr);
 			
 			if (batchMode) {
 				testProfiles.add(userProfile);
 			} else {
-				dbHandler.createUserProfile(userProfile);
-				//UserProfileHandler.getInstance().createUserProfile();
+				//dbHandler.createUserProfile(userProfile);
+				UserProfileHandler.getInstance().createUserProfile(userProfile);
 			}
 			totalRecCount++;
 		}
@@ -784,18 +789,19 @@ public class UserProfileDBHandler {
 		userProfile.setCreatedDate(1609861020944L);
 		userProfile.setLastLoggedDate(1609861020944L);
 		int idStrLen = String.valueOf(21).length();
-		int remainingLen = 8 - idStrLen;
+		int remainingLen = 10 - idStrLen;
 		String userName = userProfile.getName().toUpperCase();
 		if (userName.length() >= remainingLen) {
 			userName = userName.substring(0, remainingLen);
 		}
-		String userIdStr = userName + String.valueOf(21); 
+		String userIdStr = userName + Utils.getReferalCodeStrNotion(21); 
 		userProfile.setMyReferalId(userIdStr);
 		
 		if (batchMode) {
 			testProfiles.add(userProfile);
 		} else {
-			dbHandler.createUserProfile(userProfile);
+			//dbHandler.createUserProfile(userProfile);
+			UserProfileHandler.getInstance().createUserProfile(userProfile);
 		}
 		totalRecCount++;
 		
@@ -805,7 +811,7 @@ public class UserProfileDBHandler {
 			userProfile.setName("testuser" + index);
 			userProfile.setPasswordHash("25d19baaef913d50b6a8e302909507b8059c6410a1c8d7e1a844d6069732202e");
 			
-			String bossReferId = "RAJASEKH21";
+			String bossReferId = "RAJASEKHCB";
 			/*if (index > 1000) {
 				bossReferId = "TEST" + (index - 1);
 			}*/
@@ -817,14 +823,13 @@ public class UserProfileDBHandler {
 			userProfile.setCreatedDate(1609861020944L);
 			userProfile.setLastLoggedDate(1609861020944L);
 			idStrLen = String.valueOf(index).length();
-			remainingLen = 8 - idStrLen;
+			remainingLen = 10 - idStrLen;
 			userName = userProfile.getName().toUpperCase();
 			if (userName.length() >= remainingLen) {
 				userName = userName.substring(0, remainingLen);
 			}
-			userIdStr = userName + String.valueOf(index); 
-			userProfile.setMyReferalId(userIdStr);
-
+			userIdStr = userName + Utils.getReferalCodeStrNotion(index); 
+			userProfile.setMyReferalId(userIdStr); 
 			
 			if (batchMode) {
 				testProfiles.add(userProfile);
@@ -838,13 +843,14 @@ public class UserProfileDBHandler {
 			}
 			totalRecCount++;
 			if ((totalRecCount % 100) == 0) {
-				System.out.println("TC :" + totalRecCount);
+				System.out.println("User Profile Ct :" + totalRecCount);
 			}
 		}
 		if (batchMode) {
-			//dbHandler.testCreatedUserProfileList(testProfiles, 200);
+			dbHandler.testCreatedUserProfileList(testProfiles, 200);
+			ReferalDBHandler.getInstance().updateMaxCount(totalRecCount);
 		}
-	
+		
 		List<UserMoney> userMoneys = new ArrayList<>();
 		totalRecCount = 0;
 		for (int index = 1; index <= total; index ++) {
@@ -865,11 +871,11 @@ public class UserProfileDBHandler {
 			}
 			totalRecCount++;
 			if ((totalRecCount % 100) == 0) {
-				System.out.println("TC :" + totalRecCount);
+				System.out.println("User Money Ct :" + totalRecCount);
 			}
 		}
 		if (batchMode) {
-			//userMoneyDBHandler.testCreateMoneyInBatch(userMoneys, 200);
+			userMoneyDBHandler.testCreateMoneyInBatch(userMoneys, 200);
 		}
 		
 		
@@ -879,7 +885,7 @@ public class UserProfileDBHandler {
 			userAccResults.addAll(UserAccumulatedResultsDBHandler.getInstance().getAllUserEntries(index, 3));
 			
 			if (batchMode) {
-				if (userAccResults.size() > 200) {
+				if ((userAccResults.size() % 200) == 0) {
 					UserAccumulatedResultsDBHandler.getInstance().testCreateAccInBatch(userAccResults, 200);
 					userAccResults.clear();
 				}
@@ -888,11 +894,12 @@ public class UserProfileDBHandler {
 			}
 			totalRecCount++;
 			if ((totalRecCount % 100) == 0) {
-				System.out.println("TC :" + totalRecCount);
+				System.out.println("User Accum Ct :" + totalRecCount);
 			}
 		}
 		if (batchMode) {
-			//userMoneyDBHandler.testCreateMoneyInBatch(userMoneys, 200);
+			UserAccumulatedResultsDBHandler.getInstance().testCreateAccInBatch(userAccResults, 200);
+			userAccResults.clear();
 		}
 	}
 }

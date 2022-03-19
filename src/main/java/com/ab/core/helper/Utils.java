@@ -76,4 +76,60 @@ public class Utils {
 			bossUserId = userProfile.getBossId();
 		}
 	}
+	
+	public static String getReferalCodeStrNotion(long maxId) {
+		String maxIdStr = String.valueOf(maxId);
+		int length = maxIdStr.length();
+		
+		StringBuffer strBuffer = new StringBuffer();
+		
+		for (int index = 0; index < length; index ++) {
+			char ch = maxIdStr.charAt(index);
+			char eq = 'A';
+			switch (ch) {
+				case '0': {
+					eq = 'A';
+					break;
+				}
+				case '1': {
+					eq = 'B';
+					break;
+				}
+				case '2': {
+					eq = 'C';
+					break;
+				}
+				case '3': {
+					eq = 'D';
+					break;
+				}
+				case '4': {
+					eq = 'E';
+					break;
+				}
+				case '5': {
+					eq = 'F';
+					break;
+				}
+				case '6': {
+					eq = 'G';
+					break;
+				}
+				case '7': {
+					eq = 'H';
+					break;
+				}
+				case '8': {
+					eq = 'I';
+					break;
+				}
+				case '9': {
+					eq = 'J';
+					break;
+				}
+			}
+			strBuffer.append(eq);
+		}
+		return strBuffer.toString();
+	}
 }

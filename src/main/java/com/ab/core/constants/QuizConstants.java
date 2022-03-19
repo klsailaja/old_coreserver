@@ -4,9 +4,11 @@ public class QuizConstants {
 	
 	public static int TESTMODE = 1;
 	
-	public static final int SPECIAL_CODE_MAX_COUNT = 100;
+	public static final long MAX_USERS_COUNT = 10000000;
 	
-	public static final int CURRENT_SERVERS_COUNT = 10;
+	public static final int SPECIAL_CODE_MAX_COUNT = 1000;
+	
+	public static final int CURRENT_SERVERS_COUNT = 20;
 	
 	public static long MAX_USERS_PER_SERVER = 500000;
 	

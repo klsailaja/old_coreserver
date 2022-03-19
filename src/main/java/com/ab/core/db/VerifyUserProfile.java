@@ -129,7 +129,7 @@ public class VerifyUserProfile {
 	
 	public int deleteOTPRecord(String mailId) throws SQLException {
 		
-		logger.info("In deleteOTPRecord method" + mailId);
+		logger.info("In deleteOTPRecord method: " + mailId);
 		mailId = mailId.trim();
 		
 		ConnectionPool cp = null;

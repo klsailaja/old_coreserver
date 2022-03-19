@@ -24,7 +24,7 @@ public class UserProfileHandler {
 	
 	private static final String EMPTY_MESSAGE = "Value is empty for : %s";
     private static final String MAX_LENGTH = "Value exceeds %d for : %s";
-    private static final long MAX_USERS_COUNT = 50000000;
+    
     private UserProfileHandler() {
 	}
 	
@@ -82,7 +82,7 @@ public class UserProfileHandler {
 		// Check if referral id is correct
 		// Set the other fields
 		long maxUserId = ReferalDBHandler.getInstance().getCurrentMaxId();
-		if (maxUserId > MAX_USERS_COUNT) {
+		if (maxUserId > QuizConstants.MAX_USERS_COUNT) {
 			throw new NotAllowedException("Maximum users limit reached");
 		}
 		
@@ -116,7 +116,7 @@ public class UserProfileHandler {
 		if (bossReferalId.equals("SPECIAL")) {
 			int usedCount = ReferalDBHandler.getInstance().getSpecialCodeUsedCount();
 			logger.info("Special count number {}", usedCount);
-			if (usedCount >= QuizConstants.SPECIAL_CODE_MAX_COUNT) {
+			if (usedCount > QuizConstants.SPECIAL_CODE_MAX_COUNT) {
 				throw new NotAllowedException("Special Code usage invalid now");
 			}
 			boolean incrementResult = ReferalDBHandler.getInstance().incrementCount();

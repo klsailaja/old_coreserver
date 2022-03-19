@@ -53,7 +53,33 @@ public class UserProfileController extends BaseController {
 	private static final Logger logger = LogManager.getLogger(UserProfileController.class);
 	
 	private static final String EXTERNAL_FILE_PATH = "D:" + File.separator + "Projects" + File.separator + "Games" +
-			File.separator + "terms-and-conditions.pdf"; 
+			File.separator + "terms-and-conditions.pdf";
+	
+	
+	@RequestMapping(value = "/user", method = RequestMethod.POST, produces = "application/json")
+	public @ResponseBody UserProfile createUserProfile(@RequestBody UserProfile userProfile) 
+			throws NotAllowedException, InternalException {
+		
+		String userMailId = userProfile.getEmailAddress().trim();
+		logger.info("User Profile Creation called with {}", userMailId);
+		
+		try {
+			UserProfile dbUserProfile = UserProfileHandler.getInstance().createUserProfile(userProfile); 
+			logger.info("createUserProfile returning with {} and {}", dbUserProfile.getEmailAddress(), dbUserProfile.getId());
+			ServerDetails serverDetails = getServerDetails(dbUserProfile.getId());
+			
+			String serverIp = "http://" + serverDetails.getIpAddress() + ":" + String.valueOf(serverDetails.getPort());
+			
+			dbUserProfile.setServerIpAddress(serverIp);
+			
+			return dbUserProfile;
+			
+		} catch (SQLException ex) {
+			logger.error("Exception in createUserProfile", ex);
+			throw new InternalException("Server Error in createUserProfile");
+		}
+	}
+
 
 	@RequestMapping("/terms")
 	public void downloadPDFResource(HttpServletRequest request, HttpServletResponse response) 
@@ -168,30 +194,6 @@ public class UserProfileController extends BaseController {
 		}
 	}
 
-	// Tested.
-	@RequestMapping(value = "/user", method = RequestMethod.POST, produces = "application/json")
-	public @ResponseBody UserProfile createUserProfile(@RequestBody UserProfile userProfile) 
-			throws NotAllowedException, InternalException {
-		
-		String userMailId = userProfile.getEmailAddress().trim();
-		logger.info("createUserProfile is called with {}", userMailId);
-		
-		try {
-			UserProfile dbUserProfile = UserProfileHandler.getInstance().createUserProfile(userProfile); 
-			logger.info("createUserProfile returning with {} and {}", dbUserProfile.getEmailAddress(), dbUserProfile.getId());
-			ServerDetails serverDetails = getServerDetails(dbUserProfile.getId());
-			
-			String serverIp = "http://" + serverDetails.getIpAddress() + ":" + String.valueOf(serverDetails.getPort());
-			
-			dbUserProfile.setServerIpAddress(serverIp);
-			
-			return dbUserProfile;
-			
-		} catch (SQLException ex) {
-			logger.error("Exception in createUserProfile", ex);
-			throw new InternalException("Server Error in createUserProfile");
-		}
-	}
 
 	// Tested.
 	@RequestMapping(value = "/forgot", method = RequestMethod.POST, produces = "application/json") 
