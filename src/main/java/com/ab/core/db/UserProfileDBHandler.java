@@ -744,7 +744,7 @@ public class UserProfileDBHandler {
 		UserProfileDBHandler dbHandler = UserProfileDBHandler.getInstance();
 		
 		UserMoneyDBHandler userMoneyDBHandler = UserMoneyDBHandler.getInstance();
-		long total = 100;
+		long total = 3000;
 		boolean batchMode = true;
 		long totalRecCount = 0;
 		
@@ -811,13 +811,20 @@ public class UserProfileDBHandler {
 			userProfile.setName("testuser" + index);
 			userProfile.setPasswordHash("25d19baaef913d50b6a8e302909507b8059c6410a1c8d7e1a844d6069732202e");
 			
-			String bossReferId = "RAJASEKHCB";
-			/*if (index > 1000) {
-				bossReferId = "TEST" + (index - 1);
-			}*/
-			userProfile.setBossReferredId(bossReferId);
-			userProfile.setBossName("Rajasekhar");
-			userProfile.setBossId(21);
+			String bossRefId = "SPECIAL";
+			String bossName = "NA";
+			long bossId = 0;
+			
+			if (index == 2065) {
+				bossRefId = "RAJASEKHCB";
+				bossName = "Rajasekhar";
+				bossId = 21;
+			}
+			
+			userProfile.setBossReferredId(bossRefId);
+			userProfile.setBossName(bossName);
+			userProfile.setBossId(bossId);
+			
 			userProfile.setForgotPasswdUsed(0);
 			userProfile.setLoggedIn(0);
 			userProfile.setCreatedDate(1609861020944L);
