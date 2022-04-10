@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ab.core.constants.QuizConstants;
 import com.ab.core.pojo.OTPDetails;
 
 /*
@@ -68,10 +69,10 @@ public class VerifyUserProfile {
 			return (result > 0);
 			
 		} catch(SQLException ex) {
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Error in createUserProfileForVerify for mailid {} ", otpDetails.getMailId());
 			logger.error("The Exception is", ex);
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw ex;
 		} finally {
 			if (ps != null) {
@@ -93,7 +94,6 @@ public class VerifyUserProfile {
 		
 		PreparedStatement ps = dbConn.prepareStatement(SELECT_OTP_PRIFILE);
 		ps.setString(1, mailId);
-		logger.info("In getOTPDetailsByMailId with {}", ps);
 		
 		ResultSet rs = null;
 		
@@ -108,10 +108,11 @@ public class VerifyUserProfile {
 				}
 			}
 		} catch (SQLException ex) {
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Exception while getting the getOTPDetailsByMailId for mailId {}", mailId);
 			logger.error("SQLException in getOTPDetailsByMailId()", ex);
 			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw ex;
 		} finally {
 			if (rs != null) {
@@ -147,7 +148,9 @@ public class VerifyUserProfile {
 			logger.debug("In deleteOTPRecord operation result : {}", result);
 			return result;
 		} catch (SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Error in deleteOTPRecord ", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw ex;
 		} finally {
 			if (ps != null) {
@@ -182,7 +185,9 @@ public class VerifyUserProfile {
 			logger.debug("In updateRecordWithOTP operation result : {}", result);
 			return result;
 		} catch (SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Error in updateRecordWithOTP ", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw ex;
 		} finally {
 			if (ps != null) {

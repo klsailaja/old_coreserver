@@ -55,6 +55,86 @@ public class UserProfileController extends BaseController {
 	private static final String EXTERNAL_FILE_PATH = "D:" + File.separator + "Projects" + File.separator + "Games" +
 			File.separator + "terms-and-conditions.pdf";
 	
+	@RequestMapping(value = "/user/sendcode", method = RequestMethod.POST, produces = "application/json")
+	public @ResponseBody String verifyUserIdGenerateOTP(@RequestBody String eMail) throws NotAllowedException,
+		InternalException {
+		
+		eMail = eMail.trim();
+		eMail = eMail.replace("\"", "");
+		logger.info("This is in verifyUserIdGenerateOTP {}", eMail);
+		
+		try {
+			UserProfile userProfile = UserProfileHandler.getInstance().getUserProfileByMailId(eMail);
+			if (userProfile.getId() > 0) {
+				throw new NotAllowedException(eMail + " already registered. Use forgot password if required");
+			}
+			
+			 
+			OTPDetails otpDBEntry = VerifyUserProfile.getInstance().getOTPDetailsByMailId(eMail);
+			boolean exists = ((otpDBEntry.getMailId() != null) && otpDBEntry.getMailId().equals(eMail)); 
+			
+			String passwd = UserProfileDBHandler.getInstance().getRandomPasswd(4);
+			String passwdHash = UserProfileDBHandler.getPasswordHash(passwd);
+			
+			OTPDetails otpDetails = new OTPDetails();
+			otpDetails.setMailId(eMail);
+			otpDetails.setOtp_hash(passwdHash);
+			
+			boolean dbAddOrUpdate = false;
+			if (!exists) {
+				dbAddOrUpdate = VerifyUserProfile.getInstance().createUserProfileForVerify(otpDetails);
+			} else {
+				int updateRowCount = VerifyUserProfile.getInstance().updateRecordWithOTP(eMail, passwdHash);
+				dbAddOrUpdate = (updateRowCount > 0);
+			}
+			if (dbAddOrUpdate) {
+				
+				Mail mail = new Mail();
+		        
+				mail.setMailFrom(QuizConstants.FROM_MAIL_ID);
+				mail.setMailTo(eMail);
+				mail.setMailSubject(QuizConstants.VERIFY_MAIL_ID_SUBJECT);
+	        
+				mail.setMailContent(QuizConstants.VERIFY_MAIL_ID_BODY + passwd 
+	        		+ "\n\nThanks\n" + QuizConstants.VERIFY_MAIL_ID_SENDER_NAME);
+				
+				LazyScheduler.getInstance().submit(new SendMailTask(mail));
+			}
+			
+			return String.valueOf(true);
+		} catch(SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
+			logger.error("Error in verifyUserIdGenerateOTP for {}", eMail);
+			logger.error(ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
+			throw new InternalException("Server Error in verifyUserIdGenerateOTP");
+		}
+	}
+	
+	@RequestMapping(value = "/user/verify", method = RequestMethod.POST, produces = "application/json")
+	public @ResponseBody String verifyOTP(@RequestBody OTPDetails otpDetails)
+			throws NotAllowedException, InternalException {
+		
+		String eMail = otpDetails.getMailId().trim();
+		String passwdHash = otpDetails.getOtp_hash().trim();
+		
+		try {
+			OTPDetails dbEntry = VerifyUserProfile.getInstance().getOTPDetailsByMailId(eMail);
+			if (dbEntry.getMailId() != null) {
+				if (dbEntry.getMailId().equals(eMail)) {
+					if (dbEntry.getOtp_hash().equals(passwdHash)) {
+						return String.valueOf(true);
+					}
+				}
+			}
+			return String.valueOf(false);
+		} catch (SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
+			logger.error("Error while OTP Verify process", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
+			throw new InternalException("Server Error while OTP Verify process");
+		}
+	}
 	
 	@RequestMapping(value = "/user", method = RequestMethod.POST, produces = "application/json")
 	public @ResponseBody UserProfile createUserProfile(@RequestBody UserProfile userProfile) 
@@ -75,8 +155,43 @@ public class UserProfileController extends BaseController {
 			return dbUserProfile;
 			
 		} catch (SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Exception in createUserProfile", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw new InternalException("Server Error in createUserProfile");
+		}
+	}
+	
+	@RequestMapping(value = "/loggedin/count/{serverIndex}", method = RequestMethod.GET, produces = "application/json") 
+	public @ResponseBody long getLoggedInUserCount(@PathVariable("serverIndex") int serverIndex) throws InternalException {
+		LoggedInUsersCountTask task = LoggedInUsersCountManager.getInstance().createIfDoesNotExist(serverIndex);
+		return task.getUsersCount();
+	}
+	
+	@RequestMapping(value = "/user/{id}", method = RequestMethod.GET, produces = "application/json") 
+	public @ResponseBody UserProfile getUserProfileById(@PathVariable("id") long userId) 
+			throws InternalException {
+		
+		try {
+			return UserProfileHandler.getInstance().getUserProfileById(userId);
+		} catch (SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
+			logger.error("Exception in getUserProfileById", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
+			throw new InternalException("Server Error in getUserProfileById");
+		}
+	}
+	
+	@RequestMapping(value = "/user/{email}", method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody UserProfile getUserProfile(@PathVariable("email") String email) 
+			throws InternalException {
+		try {
+			return UserProfileHandler.getInstance().getUserProfileByMailId(email);
+		} catch (SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
+			logger.error("Exception in getUserProfileByMailId", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
+			throw new InternalException("Server Error in getUserProfileByMailId");
 		}
 	}
 
@@ -84,7 +199,6 @@ public class UserProfileController extends BaseController {
 	@RequestMapping("/terms")
 	public void downloadPDFResource(HttpServletRequest request, HttpServletResponse response) 
 			throws InternalException {
-		
 		logger.info("File exists in downloadPDFResource");
 		try {
 		
@@ -130,37 +244,6 @@ public class UserProfileController extends BaseController {
 	}
 	
 	
-	@RequestMapping(value = "/loggedin/count/{serverIndex}", method = RequestMethod.GET, produces = "application/json") 
-	public @ResponseBody long getLoggedInUserCount(@PathVariable("serverIndex") int serverIndex) throws InternalException {
-		LoggedInUsersCountTask task = LoggedInUsersCountManager.getInstance().createIfDoesNotExist(serverIndex);
-		return task.getUsersCount();
-	}
-	
-	
-	@RequestMapping(value = "/user/{id}", method = RequestMethod.GET, produces = "application/json") 
-	public @ResponseBody UserProfile getUserProfileById(@PathVariable("id") long userId) 
-			throws InternalException {
-		
-		try {
-			return UserProfileHandler.getInstance().getUserProfileById(userId);
-		} catch (SQLException ex) {
-			logger.error("Exception in getUserProfileById", ex);
-			throw new InternalException("Server Error in getUserProfileById");
-		}
-	}
-	
-	// Tested.
-	@RequestMapping(value = "/user/{email}", method = RequestMethod.GET, produces = "application/json")
-	public @ResponseBody UserProfile getUserProfile(@PathVariable("email") String email) 
-			throws InternalException {
-		
-		try {
-			return UserProfileHandler.getInstance().getUserProfileByMailId(email);
-		} catch (SQLException ex) {
-			logger.error("Exception in getUserProfileByMailId", ex);
-			throw new InternalException("Server Error in getUserProfileByMailId");
-		}
-	}
 	
 	// Tested.
 	@RequestMapping(value="/user/login", method = RequestMethod.POST, produces = "application/json")
@@ -177,7 +260,9 @@ public class UserProfileController extends BaseController {
 			loginResult.setServerIpAddress(serverIp);
 			return loginResult;
 		} catch(SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Exception in login", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw new InternalException("Server Error in login");
 		}
 	}
@@ -263,82 +348,8 @@ public class UserProfileController extends BaseController {
 		}
 	}
 	
-	@RequestMapping(value = "/user/verify", method = RequestMethod.POST, produces = "application/json")
-	public @ResponseBody String verifyOTP(@RequestBody OTPDetails otpDetails)
-			throws NotAllowedException, InternalException {
 		
-		String eMail = otpDetails.getMailId().trim();
-		String passwdHash = otpDetails.getOtp_hash().trim();
-		
-		try {
-			OTPDetails dbEntry = VerifyUserProfile.getInstance().getOTPDetailsByMailId(eMail);
-			if (dbEntry.getMailId() != null) {
-				if (dbEntry.getMailId().equals(eMail)) {
-					if (dbEntry.getOtp_hash().equals(passwdHash)) {
-						return String.valueOf(true);
-					}
-				}
-			}
-			return String.valueOf(false);
-		} catch (SQLException ex) {
-			logger.error("Error while OTP Verify process", ex);
-			throw new InternalException("Server Error while OTP Verify process");
-		}
-		
-	}
 	
-	@RequestMapping(value = "/user/sendcode", method = RequestMethod.POST, produces = "application/json")
-	public @ResponseBody String verifyUserIdGenerateOTP(@RequestBody String eMail) throws NotAllowedException,
-		InternalException {
-		
-		eMail = eMail.trim();
-		eMail = eMail.replace("\"", "");
-		logger.info("This is in verifyUserIdGenerateOTP {}", eMail);
-		try {
-			UserProfile userProfile = UserProfileHandler.getInstance().getUserProfileByMailId(eMail);
-			if (userProfile.getId() > 0) {
-				throw new NotAllowedException(eMail + " already registered. Use forgot password if required");
-			}
-			
-			 
-			OTPDetails otpDBEntry = VerifyUserProfile.getInstance().getOTPDetailsByMailId(eMail);
-			boolean exists = ((otpDBEntry.getMailId() != null) && otpDBEntry.getMailId().equals(eMail)); 
-			
-			String passwd = UserProfileDBHandler.getInstance().getRandomPasswd(4);
-			String passwdHash = UserProfileDBHandler.getPasswordHash(passwd);
-			
-			OTPDetails otpDetails = new OTPDetails();
-			otpDetails.setMailId(eMail);
-			otpDetails.setOtp_hash(passwdHash);
-			
-			boolean dbAddOrUpdate = false;
-			if (!exists) {
-				dbAddOrUpdate = VerifyUserProfile.getInstance().createUserProfileForVerify(otpDetails);
-			} else {
-				int updateRowCount = VerifyUserProfile.getInstance().updateRecordWithOTP(eMail, passwdHash);
-				dbAddOrUpdate = (updateRowCount > 0);
-			}
-			if (dbAddOrUpdate) {
-				
-				Mail mail = new Mail();
-		        
-				mail.setMailFrom("ggraj.pec@gmail.com");
-				mail.setMailTo(eMail);
-				mail.setMailSubject("4-digit Verification Code");
-	        
-				mail.setMailContent("Your 4-digit verification code :" + passwd 
-	        		+ "\n\nThanks\nTeluguQuiz");
-				
-				LazyScheduler.getInstance().submit(new SendMailTask(mail));
-			}
-			
-			return String.valueOf(true);
-		} catch(SQLException ex) {
-			logger.error("Error in verifyUserIdGenerateOTP for {}", eMail);
-			logger.error(ex);
-			throw new InternalException("Server Error in verifyUserIdGenerateOTP");
-		}
-	}
 	
 	@RequestMapping(value = "/user/transaction/{userProfileId}/{pageNum}/{accType}", method = RequestMethod.GET,
 			produces = "application/json") 
@@ -446,7 +457,7 @@ public class UserProfileController extends BaseController {
 		int serverPort = -1;
 		
 		long serverIndex = userId / QuizConstants.MAX_USERS_PER_SERVER;
-		logger.info("userId is " + userId + " and si" + serverIndex);
+		logger.info("userId is: " + userId + " and server index is :" + serverIndex);
 		
 		if (serverIndex == 0) {
 			//ipAddr = "192.168.43.188";

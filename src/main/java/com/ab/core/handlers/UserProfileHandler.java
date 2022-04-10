@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.ab.core.constants.QuizConstants;
 import com.ab.core.db.MyTransactionDBHandler;
-import com.ab.core.db.ReferalDBHandler;
+import com.ab.core.db.SpecialDataDBHandler;
 import com.ab.core.db.UserProfileDBHandler;
 import com.ab.core.exceptions.NotAllowedException;
 import com.ab.core.pojo.LoginData;
@@ -81,9 +81,9 @@ public class UserProfileHandler {
 		// Get with mail and check if not exists
 		// Check if referral id is correct
 		// Set the other fields
-		long maxUserId = ReferalDBHandler.getInstance().getCurrentMaxId();
+		long maxUserId = SpecialDataDBHandler.getInstance().getCurrentMaxId();
 		if (maxUserId > QuizConstants.MAX_USERS_COUNT) {
-			throw new NotAllowedException("Maximum users limit reached");
+			throw new NotAllowedException("Maximum users limit reached. Cannot Register");
 		}
 		
 		String str = userProfile.getEmailAddress().trim();
@@ -114,12 +114,12 @@ public class UserProfileHandler {
 			throw new NotAllowedException("Valid Referral code Compulsory");
 		}
 		if (bossReferalId.equals("SPECIAL")) {
-			int usedCount = ReferalDBHandler.getInstance().getSpecialCodeUsedCount();
+			int usedCount = SpecialDataDBHandler.getInstance().getSpecialCodeUsedCount();
 			logger.info("Special count number {}", usedCount);
 			if (usedCount > QuizConstants.SPECIAL_CODE_MAX_COUNT) {
 				throw new NotAllowedException("Special Code usage invalid now");
 			}
-			boolean incrementResult = ReferalDBHandler.getInstance().incrementCount();
+			boolean incrementResult = SpecialDataDBHandler.getInstance().incrementSpecialCodeCount();
 			logger.info("Special count increment result is {}", incrementResult);
 			userProfile.setBossId(0);
 			userProfile.setBossName("NA");

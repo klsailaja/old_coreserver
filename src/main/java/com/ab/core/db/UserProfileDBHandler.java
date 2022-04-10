@@ -199,7 +199,7 @@ public class UserProfileDBHandler {
 	public UserProfile createUserProfile(UserProfile userProfile) throws SQLException {
 		
 		logger.info("In createUserProfile for {}", userProfile.getEmailAddress());
-		long maxUseId = ReferalDBHandler.getInstance().getCurrentMaxId();
+		long maxUseId = SpecialDataDBHandler.getInstance().getCurrentMaxId();
 		maxUseId = maxUseId + 1;
 		int idStrLen = String.valueOf(maxUseId).length();
 		int remainingLen = 10 - idStrLen;
@@ -257,14 +257,14 @@ public class UserProfileDBHandler {
 					
 					VerifyUserProfile.getInstance().deleteOTPRecord(userProfile.getEmailAddress());
 					
-					boolean maxCountUpdateResult = ReferalDBHandler.getInstance().updateMaxCount(userProfileId);
+					boolean maxCountUpdateResult = SpecialDataDBHandler.getInstance().updateMaxCount(userProfileId);
 					logger.info("The result of update the max user id count is {} and {}", userProfileId, maxCountUpdateResult);
 				}
 			}
 		} catch(SQLException ex) {
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Error creating user profile", ex);
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw ex;
 		} finally {
 			if (idRes != null) {
@@ -532,7 +532,7 @@ public class UserProfileDBHandler {
 			UserProfile userProfile = getProfile(sql, mailId, -1);
 			return userProfile;
 		} catch (SQLException ex) {
-			logger.error("SQL Exception in getProfileByPhNumber", ex);
+			logger.error("SQL Exception in getProfileByMailid", ex);
 			throw ex;
 		}
 	}
@@ -855,7 +855,7 @@ public class UserProfileDBHandler {
 		}
 		if (batchMode) {
 			dbHandler.testCreatedUserProfileList(testProfiles, 200);
-			ReferalDBHandler.getInstance().updateMaxCount(totalRecCount);
+			SpecialDataDBHandler.getInstance().updateMaxCount(totalRecCount);
 		}
 		
 		List<UserMoney> userMoneys = new ArrayList<>();

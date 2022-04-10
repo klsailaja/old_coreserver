@@ -22,7 +22,9 @@ public class LoggedInUsersCountTask implements Runnable {
 			long serverRangeEnd = (serverId) * QuizConstants.MAX_USERS_PER_SERVER;
 			loggedUsersCount = UserProfileDBHandler.getInstance().getLoggedInUsersCount(serverRangeStart, serverRangeEnd);
 		} catch (Exception ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Exception in LoggedInUsersCountTask", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 		}
 	}
 	

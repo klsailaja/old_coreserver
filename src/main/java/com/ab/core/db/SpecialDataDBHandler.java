@@ -8,6 +8,8 @@ import java.sql.SQLException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ab.core.constants.QuizConstants;
+
 /*
 CREATE TABLE SPECIALCODEINFO(ID INT UNSIGNED NOT NULL AUTO_INCREMENT,
 		COUNT INT NOT NULL,
@@ -15,7 +17,7 @@ CREATE TABLE SPECIALCODEINFO(ID INT UNSIGNED NOT NULL AUTO_INCREMENT,
 INSERT INTO SPECIALCODEINFO (COUNT, MAXID) VALUES(0, 0);		
 */
 
-public class ReferalDBHandler {
+public class SpecialDataDBHandler {
 	
 	private static String TABLE_NAME = "SPECIALCODEINFO";
 	
@@ -29,20 +31,20 @@ public class ReferalDBHandler {
 			+ COUNT + " = " + COUNT + " + ? WHERE " + ID + " = 1";
 	private static final String UPDATE_MAXID_ENTRY_BY_ID = "UPDATE " + TABLE_NAME + " SET " 
 			+ MAXID + " = ? WHERE " + ID + " = 1";
-	private static final Logger logger = LogManager.getLogger(ReferalDBHandler.class);
+	private static final Logger logger = LogManager.getLogger(SpecialDataDBHandler.class);
 	
-	private static ReferalDBHandler instance = null;
+	private static SpecialDataDBHandler instance = null;
 	
 	// get api
 	// increment
 	
-	private ReferalDBHandler() {
+	private SpecialDataDBHandler() {
 	}
 	
-	public static ReferalDBHandler getInstance() {
+	public static SpecialDataDBHandler getInstance() {
 		if (instance == null) {
-			logger.debug("In ReferalDBHandler getInstance() method instance created");
-			instance = new ReferalDBHandler();
+			logger.debug("In SpecialDataDBHandler getInstance() method instance created");
+			instance = new SpecialDataDBHandler();
 		}
 		return instance;
 	}
@@ -63,10 +65,10 @@ public class ReferalDBHandler {
 				}
 			}
 		} catch (SQLException ex) {
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Exception while getting the max id");
 			logger.error("SQLException in getCurrentMaxId()", ex);
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw ex;
 		} finally {
 			if (rs != null) {
@@ -98,10 +100,10 @@ public class ReferalDBHandler {
 				}
 			}
 		} catch (SQLException ex) {
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Exception while getting the special code used count");
 			logger.error("SQLException in getSpecialCodeUsedCount()", ex);
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw ex;
 		} finally {
 			if (rs != null) {
@@ -118,7 +120,7 @@ public class ReferalDBHandler {
 	}
 	
 	public boolean updateMaxCount(long maxCount) throws SQLException {
-		logger.info("In updateMaxCount {}", maxCount);
+		logger.debug("In updateMaxCount {}", maxCount);
 		ConnectionPool cp = ConnectionPool.getInstance();
 		Connection dbConn = cp.getDBConnection();
 		PreparedStatement ps = dbConn.prepareStatement(UPDATE_MAXID_ENTRY_BY_ID);
@@ -131,10 +133,10 @@ public class ReferalDBHandler {
 			}
 		}
 		catch(SQLException ex) {
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Exception in updateMaxCount");
 			logger.error("SQLException in ", ex);
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw ex;
 		} finally {
 			if (ps != null) {
@@ -147,9 +149,9 @@ public class ReferalDBHandler {
 		return false;
 	}
 	
-	public boolean incrementCount() throws SQLException {
+	public boolean incrementSpecialCodeCount() throws SQLException {
 		
-		logger.info("In incrementCount");
+		logger.debug("In incrementSpecialCodeCount");
 		ConnectionPool cp = ConnectionPool.getInstance();
 		Connection dbConn = cp.getDBConnection();
 		PreparedStatement ps = dbConn.prepareStatement(UPDATE_INFO_ENTRY_BY_ID);
@@ -162,10 +164,10 @@ public class ReferalDBHandler {
 			}
 		}
 		catch(SQLException ex) {
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Exception while incrementCount");
 			logger.error("SQLException in ", ex);
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw ex;
 		} finally {
 			if (ps != null) {
