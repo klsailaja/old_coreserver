@@ -194,7 +194,187 @@ public class UserProfileController extends BaseController {
 			throw new InternalException("Server Error in getUserProfileByMailId");
 		}
 	}
-
+	
+	@RequestMapping(value="/user/login", method = RequestMethod.POST, produces = "application/json")
+	public @ResponseBody UserProfile login(@RequestBody LoginData loginData) 
+			throws NotAllowedException,InternalException {
+		logger.info("login called with {} ", loginData.getMailAddress());
+		try {
+			UserProfile loginResult = UserProfileHandler.getInstance().login(loginData); 
+			logger.info("login returned with {} : {} : {}", loginData.getMailAddress(), loginData.getPassword(), loginResult);
+			ServerDetails serverDetails = getServerDetails(loginResult.getId());
+			
+			String serverIp = "http://" + serverDetails.getIpAddress() + ":" + String.valueOf(serverDetails.getPort());
+			
+			loginResult.setServerIpAddress(serverIp);
+			return loginResult;
+		} catch(SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
+			logger.error("Exception in login", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
+			throw new InternalException("Server Error in login");
+		}
+	}
+	
+	@RequestMapping(value="/user/logout/{id}", method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody String logout(@PathVariable("id") long id) throws InternalException {
+		logger.info("logout called with {} ", id);
+		try {
+			boolean result = UserProfileDBHandler.getInstance().updateLoggedInState(id, 0);
+			return String.valueOf(result);
+		} catch(SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
+			logger.error("Exception in logout", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
+			throw new InternalException("Server Error in logout");
+		}
+	}
+	
+	@RequestMapping(value = "/forgot", method = RequestMethod.POST, produces = "application/json") 
+	public @ResponseBody UserProfile forgotPassword(@RequestBody LoginData loginData) 
+			throws NotAllowedException, InternalException {
+		
+		logger.info("forgotPassword is called with {}", loginData.getMailAddress());
+		try {
+			UserProfile userProfile = new UserProfile();
+			userProfile.setEmailAddress(loginData.getMailAddress());
+			
+			boolean updateResult = UserProfileHandler.getInstance().updateUserProfileDetails(userProfile, true);
+			
+			if (!updateResult) {
+				String errMsg = "Could not reset passwd for : " + userProfile.getEmailAddress().trim() + " in forgot passwd";
+				throw new InternalException(errMsg);
+			}
+			
+			UserProfile dbProfile = UserProfileHandler.getInstance().getUserProfileByMailId(userProfile.getEmailAddress());
+			logger.info("updateUserProfile returning with {} and {}", dbProfile.getEmailAddress(), dbProfile.getId());
+			return dbProfile;
+		} catch (SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
+			logger.error("Exception in forgotPassword", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
+			throw new InternalException("Server Error in forgotPassword");
+		}
+	}
+	
+	@RequestMapping(value = "/updatetime", method = RequestMethod.POST, produces = "application/json")
+	public @ResponseBody String updateLastLoggedInTime(@RequestBody UpdateTime updateLastLoggedInTime) {
+		LazyScheduler.getInstance().submit(new UpdateLastLoggedInTimeTask(updateLastLoggedInTime.getUserIds()), 2, TimeUnit.MINUTES);
+		return "true";
+	}
+	
+	@RequestMapping(value = "/update", method = RequestMethod.POST, produces = "application/json")
+	public @ResponseBody UserProfile updateUserProfile(@RequestBody UserProfile userProfile)
+			throws NotAllowedException, InternalException {
+		logger.info("updateUserProfile is called with {}", userProfile.getEmailAddress().trim());
+		try {
+			boolean updateResult = UserProfileHandler.getInstance().updateUserProfileDetails(userProfile, false);
+			if (!updateResult) {
+				throw new InternalException("Could not update profile contents for " + userProfile.getEmailAddress() + " during update");
+			}
+			
+			UserProfile dbProfile = UserProfileHandler.getInstance().getUserProfileByMailId(userProfile.getEmailAddress());
+			logger.info("updateUserProfile returning with {} and {}", dbProfile.getEmailAddress(), dbProfile.getId());
+			return dbProfile;
+		} catch (SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
+			logger.error("Exception in updateUserProfile", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
+			throw new InternalException("Server Error in updateUserProfile");
+		}
+	}
+	
+	@RequestMapping(value = "/user/mreferal/{myreferalcode}/{pageNum}", method = RequestMethod.GET, produces = "application/json") 
+	public @ResponseBody ReferalDetails getUserReferals(@PathVariable("myreferalcode") String referalCode,
+			@PathVariable("pageNum") int pageNum) throws InternalException {
+		logger.info("getUserReferals is called with code {} : pageNo {}", referalCode, pageNum);
+		try {
+			UserProfileHandler profileHandler = UserProfileHandler.getInstance(); 
+			ReferalDetails referalDetails = profileHandler.getUserReferals(referalCode, pageNum);
+			logger.info("Referals list size is {} for referal code {}", referalDetails.getReferalList().size(), referalCode);
+			return referalDetails;
+		} catch (SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
+			logger.error("Exception in getUserReferals", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
+			throw new InternalException("Server Error in getUserReferals");
+		}
+	}
+	
+	@RequestMapping(value = "/user/transaction/{userProfileId}/{pageNum}/{accType}", method = RequestMethod.GET,
+			produces = "application/json") 
+	public @ResponseBody TransactionsHolder getTransactions(@PathVariable("userProfileId") long userProfileId,
+			@PathVariable("pageNum") int pageNum, @PathVariable("accType") int accType) throws InternalException, NotAllowedException {
+		logger.info("getTransactions is called with user id {} : pageNo {}", userProfileId, pageNum);
+		try {
+			UserProfileHandler profileHandler = UserProfileHandler.getInstance();
+			TransactionsHolder transactionsDetails = profileHandler.getTransactionsList(userProfileId, pageNum, accType); 
+			logger.info("Transactions list size is {} for user profile id {}", transactionsDetails.getTransactionsList().size(), userProfileId);
+			return transactionsDetails;
+		} catch (SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
+			logger.error("Exception in getTransactionsList", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
+			throw new InternalException("Server Error in getTransactionsList");
+		}
+	}
+	
+	@RequestMapping (value = "/wd/messages", method = RequestMethod.POST, produces = "application/json")
+	public @ResponseBody String postGenericWithdrawMessages(@RequestBody List<String> withDrawMsgs) {
+		WinMsgHandler.getInstance().setWithdrawMessages(withDrawMsgs);
+		return String.valueOf(true);
+	}
+	
+	@RequestMapping(value = "/win/messages", method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody List<String> getGenericWinMessages() {
+		return WinMsgHandler.getInstance().getRecentWinMsgs();
+	}
+	
+	@RequestMapping(value = "/wd/messages/{userId}/{maxCount}", method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody List<String> getRecentWinWDMessages(@PathVariable long userId, @PathVariable int maxCount) 
+			throws NotAllowedException, InternalException {
+		
+		logger.info("In getRecentWinWDMessages with userId {} and {}", userId, maxCount);
+		List<String> combinedMsgs = WinMsgHandler.getInstance().getCombinedMessages();
+		return combinedMsgs;
+	}
+	
+	@RequestMapping(value = "/user/network/{userId}/{maxCount}", method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody UserNetwork getUserNetworkIds(@PathVariable long userId, @PathVariable int maxCount)
+			throws InternalException {
+		return getUserFrdDetails(userId, maxCount);
+	}
+	
+	@RequestMapping(value = "/user/win/{userId}/{maxCount}", method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody List<String> getUserFrdsWinMsgs(@PathVariable long userId, @PathVariable int maxCount)
+			throws InternalException {
+		
+		UserNetwork userNetwork = getUserFrdDetails(userId, maxCount);
+		
+		int frdSize = userNetwork.getClosedUserIdSet().size();
+		
+		List<String> frdsWinMsgs = new ArrayList<>();
+		
+		if (frdSize == 0) {
+			return frdsWinMsgs;
+		}
+		
+		for (int index = 1; index <= frdSize; index++) {
+			long frdUid = userNetwork.getClosedUserIdSet().get(index);
+			String frdName = userNetwork.getClosedUserNameList().get(index);
+			try {
+				List<String> frdWinMsgs = MyTransactionDBHandler.getInstance().getRecentWinRecords(frdUid, true, frdName);
+				frdsWinMsgs.addAll(frdWinMsgs);
+				frdWinMsgs.add("*");
+			} catch(SQLException ex) {
+				logger.error(QuizConstants.ERROR_PREFIX_START);
+				logger.error("Exception in getUserFrdsWinMsgs", ex);
+				logger.error(QuizConstants.ERROR_PREFIX_END);
+				continue;
+			}
+		}
+		return frdsWinMsgs;
+	}
 
 	@RequestMapping("/terms")
 	public void downloadPDFResource(HttpServletRequest request, HttpServletResponse response) 
@@ -239,189 +419,10 @@ public class UserProfileController extends BaseController {
 				FileCopyUtils.copy(inputStream, response.getOutputStream());
 			}
 		} catch(IOException ex) {
-			logger.error("IOException at ", ex);
-		}
-	}
-	
-	
-	
-	// Tested.
-	@RequestMapping(value="/user/login", method = RequestMethod.POST, produces = "application/json")
-	public @ResponseBody UserProfile login(@RequestBody LoginData loginData) 
-			throws NotAllowedException,InternalException {
-		logger.info("login called with {} ", loginData.getMailAddress());
-		try {
-			UserProfile loginResult = UserProfileHandler.getInstance().login(loginData); 
-			logger.info("login returned with {} : {} : {}", loginData.getMailAddress(), loginData.getPassword(), loginResult);
-			ServerDetails serverDetails = getServerDetails(loginResult.getId());
-			
-			String serverIp = "http://" + serverDetails.getIpAddress() + ":" + String.valueOf(serverDetails.getPort());
-			
-			loginResult.setServerIpAddress(serverIp);
-			return loginResult;
-		} catch(SQLException ex) {
 			logger.error(QuizConstants.ERROR_PREFIX_START);
-			logger.error("Exception in login", ex);
+			logger.error("IOException at ", ex);
 			logger.error(QuizConstants.ERROR_PREFIX_END);
-			throw new InternalException("Server Error in login");
 		}
-	}
-	
-	@RequestMapping(value="/user/logout/{id}", method = RequestMethod.GET, produces = "application/json")
-	public @ResponseBody String logout(@PathVariable("id") long id) throws InternalException {
-		logger.info("logout called with {} ", id);
-		try {
-			boolean result = UserProfileDBHandler.getInstance().updateLoggedInState(id, 0);
-			return String.valueOf(result);
-		} catch(SQLException ex) {
-			logger.error("Exception in logout", ex);
-			throw new InternalException("Server Error in logout");
-		}
-	}
-
-
-	// Tested.
-	@RequestMapping(value = "/forgot", method = RequestMethod.POST, produces = "application/json") 
-	public @ResponseBody UserProfile forgotPassword(@RequestBody LoginData loginData) 
-			throws NotAllowedException, InternalException {
-		
-		logger.info("forgotPassword is called with {}", loginData.getMailAddress());
-		try {
-			UserProfile userProfile = new UserProfile();
-			userProfile.setEmailAddress(loginData.getMailAddress());
-			
-			boolean updateResult = UserProfileHandler.getInstance().updateUserProfileDetails(userProfile, true);
-			
-			if (!updateResult) {
-				String errMsg = "Could not update profile contents for : " + userProfile.getEmailAddress().trim() + " in forgot passwd";
-				throw new InternalException(errMsg);
-			}
-			
-			UserProfile dbProfile = UserProfileHandler.getInstance().getUserProfileByMailId(userProfile.getEmailAddress());
-			logger.info("updateUserProfile returning with {} and {}", dbProfile.getEmailAddress(), dbProfile.getId());
-			return dbProfile;
-		} catch (SQLException ex) {
-			logger.error("Exception in forgotPassword", ex);
-			throw new InternalException("Server Error in forgotPassword");
-		}
-	}
-	
-	@RequestMapping(value = "/updatetime", method = RequestMethod.POST, produces = "application/json")
-	public @ResponseBody String updateLastLoggedInTime(@RequestBody UpdateTime updateLastLoggedInTime) {
-		LazyScheduler.getInstance().submit(new UpdateLastLoggedInTimeTask(updateLastLoggedInTime.getUserIds()), 2, TimeUnit.MINUTES);
-		return "true";
-	}
-	
-	// Tested.
-	@RequestMapping(value = "/update", method = RequestMethod.POST, produces = "application/json")
-	public @ResponseBody UserProfile updateUserProfile(@RequestBody UserProfile userProfile)
-			throws NotAllowedException, InternalException {
-		
-		logger.info("updateUserProfile is called with {}", userProfile.getEmailAddress().trim());
-		try {
-			boolean updateResult = UserProfileHandler.getInstance().updateUserProfileDetails(userProfile, false);
-			if (!updateResult) {
-				throw new InternalException("Could not update profile contents for " + userProfile.getEmailAddress() + " during update");
-			}
-			
-			UserProfile dbProfile = UserProfileHandler.getInstance().getUserProfileByMailId(userProfile.getEmailAddress());
-			logger.info("updateUserProfile returning with {} and {}", dbProfile.getEmailAddress(), dbProfile.getId());
-			return dbProfile;
-		} catch (SQLException ex) {
-			logger.error("Exception in updateUserProfile", ex);
-			throw new InternalException("Server Error in updateUserProfile");
-		}
-	}
-	
-	@RequestMapping(value = "/user/mreferal/{myreferalcode}/{pageNum}", method = RequestMethod.GET, produces = "application/json") 
-	public @ResponseBody ReferalDetails getUserReferals(@PathVariable("myreferalcode") String referalCode,
-			@PathVariable("pageNum") int pageNum) throws InternalException {
-		logger.info("getUserReferals is called with code {} : pageNo {}", referalCode, pageNum);
-		try {
-			UserProfileHandler profileHandler = UserProfileHandler.getInstance(); 
-			ReferalDetails referalDetails = profileHandler.getUserReferals(referalCode, pageNum);
-			logger.info("Referals list size is {} for referal code {}", referalDetails.getReferalList().size(), referalCode);
-			return referalDetails;
-		} catch (SQLException ex) {
-			logger.error("Exception in getUserReferals", ex);
-			throw new InternalException("Server Error in getUserReferals");
-		}
-	}
-	
-		
-	
-	
-	@RequestMapping(value = "/user/transaction/{userProfileId}/{pageNum}/{accType}", method = RequestMethod.GET,
-			produces = "application/json") 
-	public @ResponseBody TransactionsHolder getTransactions(@PathVariable("userProfileId") long userProfileId,
-			@PathVariable("pageNum") int pageNum, @PathVariable("accType") int accType) throws InternalException, NotAllowedException {
-		logger.info("getTransactions is called with user id {} : pageNo {}", userProfileId, pageNum);
-		try {
-			UserProfileHandler profileHandler = UserProfileHandler.getInstance();
-			TransactionsHolder transactionsDetails = profileHandler.getTransactionsList(userProfileId, pageNum, accType); 
-			logger.info("Transactions list size is {} for user profile id {}", transactionsDetails.getTransactionsList().size(), userProfileId);
-			return transactionsDetails;
-		} catch (SQLException ex) {
-			logger.error("Exception in getTransactionsList", ex);
-			throw new InternalException("Server Error in getTransactionsList");
-		}
-	}
-	
-	@RequestMapping (value = "/wd/messages", method = RequestMethod.POST, produces = "application/json")
-	public @ResponseBody String postGenericWithdrawMessages(@RequestBody List<String> withDrawMsgs) {
-		WinMsgHandler.getInstance().setWithdrawMessages(withDrawMsgs);
-		return String.valueOf(true);
-	}
-	
-	@RequestMapping(value = "/win/messages", method = RequestMethod.GET, produces = "application/json")
-	public @ResponseBody List<String> getGenericWinMessages() {
-		return WinMsgHandler.getInstance().getRecentWinMsgs();
-	}
-	
-	
-	
-	@RequestMapping(value = "/wd/messages/{userId}/{maxCount}", method = RequestMethod.GET, produces = "application/json")
-	public @ResponseBody List<String> getRecentWinWDMessages(@PathVariable long userId, @PathVariable int maxCount) 
-			throws NotAllowedException, InternalException {
-		
-		logger.info("In getRecentWinWDMessages with userId {} and {}", userId, maxCount);
-		List<String> combinedMsgs = WinMsgHandler.getInstance().getCombinedMessages();
-		return combinedMsgs;
-	}
-	
-	@RequestMapping(value = "/user/network/{userId}/{maxCount}", method = RequestMethod.GET, produces = "application/json")
-	public @ResponseBody UserNetwork getUserNetworkIds(@PathVariable long userId, @PathVariable int maxCount)
-			throws InternalException {
-		return getUserFrdDetails(userId, maxCount);
-	}
-	
-	@RequestMapping(value = "/user/win/{userId}/{maxCount}", method = RequestMethod.GET, produces = "application/json")
-	public @ResponseBody List<String> getUserFrdsWinMsgs(@PathVariable long userId, @PathVariable int maxCount)
-			throws InternalException {
-		
-		UserNetwork userNetwork = getUserFrdDetails(userId, maxCount);
-		
-		int frdSize = userNetwork.getClosedUserIdSet().size();
-		
-		List<String> frdsWinMsgs = new ArrayList<>();
-		
-		if (frdSize == 0) {
-			return frdsWinMsgs;
-		}
-		
-		for (int index = 1; index <= frdSize; index++) {
-			long frdUid = userNetwork.getClosedUserIdSet().get(index);
-			String frdName = userNetwork.getClosedUserNameList().get(index);
-			try {
-				List<String> frdWinMsgs = MyTransactionDBHandler.getInstance().getRecentWinRecords(frdUid, true, frdName);
-				frdsWinMsgs.addAll(frdWinMsgs);
-				frdWinMsgs.add("*");
-			} catch(SQLException ex) {
-				logger.error("Exception in getUserFrdsWinMsgs", ex);
-				continue;
-			}
-		}
-		return frdsWinMsgs;
 	}
 	
 	private UserNetwork getUserFrdDetails(long userId, int maxCount) throws InternalException {
@@ -443,12 +444,12 @@ public class UserProfileController extends BaseController {
 			return userNetwork;
 		
 		} catch (SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Exception while getting the closed users details ", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw new InternalException("Error while gettin the closed users details");
 		}
 	}
-	
-	
 	
 	private ServerDetails getServerDetails(long userId) {
 		

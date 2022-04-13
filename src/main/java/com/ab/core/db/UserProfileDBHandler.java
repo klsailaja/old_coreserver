@@ -303,10 +303,10 @@ public class UserProfileDBHandler {
 				}
 			}
 		} catch (SQLException ex) {
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Exception while getting the getMaxUserId()");
 			logger.error("SQL Exception in getMaxUserId()", ex);
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw ex;
 		} finally {
 			if (rs != null) {
@@ -370,7 +370,6 @@ public class UserProfileDBHandler {
 				dbConn.close();
 			}
 		}
-		//logger.debug("The userProfile is {}", userProfile);
 		return userProfile;
 	}
 	
@@ -508,7 +507,7 @@ public class UserProfileDBHandler {
 			}
 		}
 		referalDetails.setReferalList(myReferals);
-		logger.info("getUserReferals with total {}", referalDetails.getReferalList().size());
+		logger.debug("getUserReferals with total {}", referalDetails.getReferalList().size());
 		return referalDetails;
 	}
 	
@@ -520,7 +519,9 @@ public class UserProfileDBHandler {
 			UserProfile userProfile = getProfile(sql, null, profileId);
 			return userProfile;
 		} catch (SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("SQL Exception in getProfileById", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw ex;
 		}
 	}
@@ -532,7 +533,9 @@ public class UserProfileDBHandler {
 			UserProfile userProfile = getProfile(sql, mailId, -1);
 			return userProfile;
 		} catch (SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("SQL Exception in getProfileByMailid", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw ex;
 		}
 	}
@@ -581,9 +584,9 @@ public class UserProfileDBHandler {
 			}
 		}
 		catch(SQLException ex) {
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Error updating in updateUserProfileDetails", ex);
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw ex;
 		} finally {
 			if (ps != null) {
@@ -598,12 +601,12 @@ public class UserProfileDBHandler {
 			
 			Mail mail = new Mail();
         
-			mail.setMailFrom("ggraj.pec@gmail.com");
+			mail.setMailFrom(QuizConstants.FROM_MAIL_ID);
 			mail.setMailTo(userProfile.getEmailAddress().trim());
 			mail.setMailSubject("Password Reset");
         
 			mail.setMailContent("Your password has been reset. Please login with " + passwd 
-        		+ " If not reset by you, please change the password using ChangePassword Option in My Profile\n\nThanks\nTeluguQuiz");
+        		+ " If not reset by you, please change the password using ChangePassword Option in My Profile\n\nThanks\n" + QuizConstants.VERIFY_MAIL_ID_SENDER_NAME);
 			
 			LazyScheduler.getInstance().submit(new SendMailTask(mail));
 		}
@@ -630,9 +633,9 @@ public class UserProfileDBHandler {
 			return result;
 		}
 		catch(SQLException ex) {
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Error updating in updateLoggedInState", ex);
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw ex;
 		} finally {
 			if (ps != null) {
@@ -699,9 +702,9 @@ public class UserProfileDBHandler {
 					totalSuccessCount, totalFailureCount);
 			
 		} catch(SQLException ex) {
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Error processing updateLastLoggedTimeInBulkMode", ex);
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw ex;
 		} finally {
 			if (ps != null) {

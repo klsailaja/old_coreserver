@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ab.core.constants.QuizConstants;
 import com.ab.core.db.UserAccumulatedResultsDBHandler;
 import com.ab.core.exceptions.InternalException;
 import com.ab.core.exceptions.NotAllowedException;
@@ -36,7 +37,9 @@ public class UserMoneyController extends BaseController {
 		try {
 			return UserMoneyHandler.getInstance().getUserMoney(userProfileId);
 		} catch (SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Exception in getUserMoney", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw new InternalException("Server Error in getUserMoney");
 		}
 	}
@@ -51,7 +54,9 @@ public class UserMoneyController extends BaseController {
 			userMoney.setReferAmount(userAccumulatedResults[1]);
 			return userMoney;
 		} catch (Exception ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Exception in getFullMoneyTask", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw new InternalException("Server Error in getFullMoneyTask");
 		}
 	}
@@ -64,7 +69,9 @@ public class UserMoneyController extends BaseController {
 		try {
 			return UserMoneyHandler.getInstance().performUserMoneyOperation(completeDetails);
 		} catch (SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Exception in loadMoney", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw new InternalException("Server Error in loadMoney");
 		}
 	}
