@@ -255,7 +255,7 @@ public class UserProfileDBHandler {
 					UserAccumulatedResultsDBHandler.getInstance().createInitialEntries(obj, 3);
 
 					
-					VerifyUserProfile.getInstance().deleteOTPRecord(userProfile.getEmailAddress());
+					VerifyUserProfileDBHandler.getInstance().deleteOTPRecord(userProfile.getEmailAddress());
 					
 					boolean maxCountUpdateResult = SpecialDataDBHandler.getInstance().updateMaxCount(userProfileId);
 					logger.info("The result of update the max user id count is {} and {}", userProfileId, maxCountUpdateResult);

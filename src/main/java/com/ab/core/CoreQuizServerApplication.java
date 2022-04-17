@@ -18,6 +18,7 @@ import com.ab.core.helper.LoggedInUsersCountManager;
 import com.ab.core.helper.WinMsgHandler;
 import com.ab.core.tasks.DeleteGameMoneyCreditedStatus;
 import com.ab.core.tasks.DeleteOldRecords;
+import com.ab.core.tasks.DeleteUselessOTPTask;
 import com.ab.core.tasks.LoggedInUsersCountTask;
 
 @SpringBootApplication
@@ -55,6 +56,8 @@ public class CoreQuizServerApplication implements ApplicationRunner {
 		LazyScheduler.getInstance().submitRepeatedTask(new DeleteOldRecords(), initialDelay, 
 				24 * 60 * 1000, TimeUnit.MILLISECONDS);
 		LazyScheduler.getInstance().submitRepeatedTask(new DeleteGameMoneyCreditedStatus(), 0, 15 * 60 * 1000, TimeUnit.MILLISECONDS);
+		LazyScheduler.getInstance().submitRepeatedTask(new DeleteUselessOTPTask(), initialDelay, 
+				24 * 60 * 1000, TimeUnit.MILLISECONDS);
 		
 		WinMsgHandler.getInstance();
 		

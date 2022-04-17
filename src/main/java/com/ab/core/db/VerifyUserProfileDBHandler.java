@@ -13,37 +13,46 @@ import com.ab.core.pojo.OTPDetails;
 
 /*
  * CREATE TABLE VERIFYUSERPROFILE(MAILID VARCHAR(320) NOT NULL, 
- * OTPCODE VARCHAR(80) NULL, PRIMARY KEY (MAILID)) ENGINE = INNODB;
+ * OTPCODE VARCHAR(80) NULL, 
+ * CREATEDDATE BIGINT, PRIMARY KEY (MAILID)) ENGINE = INNODB;
  */
 
-public class VerifyUserProfile {
+public class VerifyUserProfileDBHandler {
 	
-	private static final Logger logger = LogManager.getLogger(VerifyUserProfile.class);
+	private static final Logger logger = LogManager.getLogger(VerifyUserProfileDBHandler.class);
 	
 	private static String TABLE_NAME = "VERIFYUSERPROFILE";
 	private static String MAILID = "MAILID";
 	private static String OTP = "OTPCODE";
+	private static String CREATEDDATE = "CREATEDDATE";
 	
-	private static VerifyUserProfile instance = null;
+	private static int DELETE_USELESS_ENTRIES_DURATION_IN_HRS = 3;
+	private static final long DELETE_USELESS_ENTRIES_DURATION_IN_MILLIS = DELETE_USELESS_ENTRIES_DURATION_IN_HRS * 60 * 1000;
+	
+	private static VerifyUserProfileDBHandler instance = null;
 	
 	private static final String CREATE_OTP_PROFILE = "INSERT INTO " + TABLE_NAME   
-			+ "(" + MAILID + "," + OTP + ") VALUES"   
-			+ "(?,?)";
+			+ "(" + MAILID + "," + OTP + "," + CREATEDDATE + ") VALUES"   
+			+ "(?,?,?)";
 	private static final String REMOVE_OTP_PRIFILE = "DELETE FROM " + TABLE_NAME 
 			+ " WHERE " + MAILID + " = ? ";
 	
 	private static final String SELECT_OTP_PRIFILE = "SELECT * FROM " + TABLE_NAME 
 			+ " WHERE " + MAILID + " = ? ";
 	
-	private static final String UPDATE_OTP = "UPDATE " + TABLE_NAME + " SET " + OTP + " = ? WHERE " + MAILID + " = ? ";    
+	private static final String UPDATE_OTP = "UPDATE " + TABLE_NAME + " SET " + OTP + " = ? WHERE " + MAILID + " = ? ";
+	
+	private static final String DELETE_USELESS_ENTRIES = "DELETE FROM " + TABLE_NAME + " WHERE (?" 
+			+ "- CREATEDDATE) <= " + DELETE_USELESS_ENTRIES_DURATION_IN_MILLIS; 
+	
 			
-	private VerifyUserProfile() {
+	private VerifyUserProfileDBHandler() {
 	}
 	
-	public static VerifyUserProfile getInstance() {
+	public static VerifyUserProfileDBHandler getInstance() {
 		if (instance == null) {
 			logger.debug("In VerifyUserProfile getInstance() method instance created");
-			instance = new VerifyUserProfile();
+			instance = new VerifyUserProfileDBHandler();
 		}
 		return instance;
 	}
@@ -63,6 +72,7 @@ public class VerifyUserProfile {
 			
 			ps.setString(1, otpDetails.getMailId());
 			ps.setString(2, otpDetails.getOtp_hash());
+			ps.setLong(3, System.currentTimeMillis());
 			
 			int result = ps.executeUpdate();
 			logger.info("createUserProfileForVerify with mailid {} result is {}", otpDetails.getMailId(), (result > 0));
@@ -150,6 +160,39 @@ public class VerifyUserProfile {
 		} catch (SQLException ex) {
 			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Error in deleteOTPRecord ", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
+			throw ex;
+		} finally {
+			if (ps != null) {
+				ps.close();
+			}
+			if (dbConn != null) {
+				dbConn.close();
+			}
+		}
+	}
+	
+	public int deleteUselessEntries() throws SQLException {
+		
+		logger.info("In deleteUselessEntries in OTP Table method: ");
+		
+		ConnectionPool cp = null;
+		Connection dbConn = null;
+		PreparedStatement ps = null;
+		
+		try {
+			cp = ConnectionPool.getInstance();
+			dbConn = cp.getDBConnection();
+			ps = dbConn.prepareStatement(DELETE_USELESS_ENTRIES);
+			
+			ps.setLong(1, System.currentTimeMillis());
+			
+			int result = ps.executeUpdate();
+			logger.debug("In deleteUselessEntries operation result : {}", result);
+			return result;
+		} catch (SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
+			logger.error("Error in deleteUselessEntries ", ex);
 			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw ex;
 		} finally {

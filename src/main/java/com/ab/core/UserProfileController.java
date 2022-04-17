@@ -28,7 +28,7 @@ import com.ab.core.common.LazyScheduler;
 import com.ab.core.constants.QuizConstants;
 import com.ab.core.db.MyTransactionDBHandler;
 import com.ab.core.db.UserProfileDBHandler;
-import com.ab.core.db.VerifyUserProfile;
+import com.ab.core.db.VerifyUserProfileDBHandler;
 import com.ab.core.exceptions.InternalException;
 import com.ab.core.exceptions.NotAllowedException;
 import com.ab.core.handlers.UserProfileHandler;
@@ -70,7 +70,7 @@ public class UserProfileController extends BaseController {
 			}
 			
 			 
-			OTPDetails otpDBEntry = VerifyUserProfile.getInstance().getOTPDetailsByMailId(eMail);
+			OTPDetails otpDBEntry = VerifyUserProfileDBHandler.getInstance().getOTPDetailsByMailId(eMail);
 			boolean exists = ((otpDBEntry.getMailId() != null) && otpDBEntry.getMailId().equals(eMail)); 
 			
 			String passwd = UserProfileDBHandler.getInstance().getRandomPasswd(4);
@@ -82,9 +82,9 @@ public class UserProfileController extends BaseController {
 			
 			boolean dbAddOrUpdate = false;
 			if (!exists) {
-				dbAddOrUpdate = VerifyUserProfile.getInstance().createUserProfileForVerify(otpDetails);
+				dbAddOrUpdate = VerifyUserProfileDBHandler.getInstance().createUserProfileForVerify(otpDetails);
 			} else {
-				int updateRowCount = VerifyUserProfile.getInstance().updateRecordWithOTP(eMail, passwdHash);
+				int updateRowCount = VerifyUserProfileDBHandler.getInstance().updateRecordWithOTP(eMail, passwdHash);
 				dbAddOrUpdate = (updateRowCount > 0);
 			}
 			if (dbAddOrUpdate) {
@@ -119,7 +119,7 @@ public class UserProfileController extends BaseController {
 		String passwdHash = otpDetails.getOtp_hash().trim();
 		
 		try {
-			OTPDetails dbEntry = VerifyUserProfile.getInstance().getOTPDetailsByMailId(eMail);
+			OTPDetails dbEntry = VerifyUserProfileDBHandler.getInstance().getOTPDetailsByMailId(eMail);
 			if (dbEntry.getMailId() != null) {
 				if (dbEntry.getMailId().equals(eMail)) {
 					if (dbEntry.getOtp_hash().equals(passwdHash)) {
