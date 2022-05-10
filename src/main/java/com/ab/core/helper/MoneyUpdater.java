@@ -78,12 +78,12 @@ public class MoneyUpdater {
 			long userReferMoney = 0;
 			
 			for (MoneyTransaction moneyTran : perUserTransactions) {
-				
+				long transactionAmount = moneyTran.getAmount();
 				UserMoneyAccountType userAccountType = moneyTran.getAccountType();
 				if (moneyTran.getOperType() == UserMoneyOperType.ADD) {
-					userBalance = userBalance + moneyTran.getAmount();
+					userBalance = userBalance + transactionAmount;
 				} else {
-					userBalance = userBalance - moneyTran.getAmount();
+					userBalance = userBalance - transactionAmount;
 				}
 				userCB = userBalance;
 				moneyTran.getTransaction().setOpeningBalance(userOB);
@@ -91,9 +91,17 @@ public class MoneyUpdater {
 				userOB = userCB;
 				
 				if (userAccountType == UserMoneyAccountType.WINNING_MONEY) {
-					userWinMoney = userWinMoney + moneyTran.getAmount();
+					if (moneyTran.getOperType() == UserMoneyOperType.ADD) {
+						userWinMoney = userWinMoney + transactionAmount;
+					} else {
+						userWinMoney = userWinMoney - transactionAmount;
+					}
 				} else if (userAccountType == UserMoneyAccountType.REFERAL_MONEY) {
-					userReferMoney = userReferMoney + moneyTran.getAmount();
+					if (moneyTran.getOperType() == UserMoneyOperType.ADD) {
+						userReferMoney = userReferMoney + transactionAmount;
+					} else {
+						userReferMoney = userReferMoney - transactionAmount;
+					}
 				}
 			}
 	

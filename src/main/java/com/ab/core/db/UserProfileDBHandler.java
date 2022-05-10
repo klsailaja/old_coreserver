@@ -814,7 +814,7 @@ public class UserProfileDBHandler {
 			userProfile.setName("testuser" + index);
 			userProfile.setPasswordHash("25d19baaef913d50b6a8e302909507b8059c6410a1c8d7e1a844d6069732202e");
 			
-			String bossRefId = "SPECIAL";
+			/*String bossRefId = "SPECIAL";
 			String bossName = "NA";
 			long bossId = 0;
 			
@@ -822,11 +822,22 @@ public class UserProfileDBHandler {
 				bossRefId = "RAJASEKHCB";
 				bossName = "Rajasekhar";
 				bossId = 21;
+			}*/
+			
+			int bossIndex = (index - 1); 
+			String bossUserName = "testuser" + bossIndex;
+			userProfile.setBossName(bossUserName);
+			int bossIdStrLen = String.valueOf(bossIndex).length();
+			remainingLen = 10 - bossIdStrLen;
+			bossUserName = userProfile.getName().toUpperCase();
+			if (bossUserName.length() >= remainingLen) {
+				bossUserName = bossUserName.substring(0, remainingLen);
 			}
+			String bossRefId = bossUserName + Utils.getReferalCodeStrNotion(bossIndex);
 			
 			userProfile.setBossReferredId(bossRefId);
-			userProfile.setBossName(bossName);
-			userProfile.setBossId(bossId);
+			
+			userProfile.setBossId(bossIndex);
 			
 			userProfile.setForgotPasswdUsed(0);
 			userProfile.setLoggedIn(0);

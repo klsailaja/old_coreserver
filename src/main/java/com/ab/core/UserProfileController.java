@@ -359,13 +359,13 @@ public class UserProfileController extends BaseController {
 			return frdsWinMsgs;
 		}
 		
-		for (int index = 1; index <= frdSize; index++) {
+		for (int index = 0; index < frdSize; index++) {
 			long frdUid = userNetwork.getClosedUserIdSet().get(index);
 			String frdName = userNetwork.getClosedUserNameList().get(index);
 			try {
-				List<String> frdWinMsgs = MyTransactionDBHandler.getInstance().getRecentWinRecords(frdUid, true, frdName);
-				frdsWinMsgs.addAll(frdWinMsgs);
-				frdWinMsgs.add("*");
+				List<String> winMsgs = MyTransactionDBHandler.getInstance().getRecentWinRecords(frdUid, true, frdName);
+				frdsWinMsgs.addAll(winMsgs);
+				frdsWinMsgs.add("*");
 			} catch(SQLException ex) {
 				logger.error(QuizConstants.ERROR_PREFIX_START);
 				logger.error("Exception in getUserFrdsWinMsgs", ex);
@@ -459,18 +459,18 @@ public class UserProfileController extends BaseController {
 		
 		long serverIndex = userId / QuizConstants.MAX_USERS_PER_SERVER;
 		logger.info("userId is: " + userId + " and server index is :" + serverIndex);
-		
+		ipAddr = "192.168.1.8";
 		if (serverIndex == 0) {
 			//ipAddr = "192.168.43.188";
-			ipAddr = "192.168.1.4";
+			//ipAddr = "192.168.1.6";
 			serverPort = 8081;
 		} else if (serverIndex == 1) {
 			//ipAddr = "192.168.43.188";
-			ipAddr = "192.168.1.4";
+			//ipAddr = "192.168.1.6";
 			serverPort = 8082;
 		} else if (serverIndex == 2) {
 			//ipAddr = "192.168.43.188";
-			ipAddr = "192.168.1.4";
+			//ipAddr = "192.168.1.6";
 			serverPort = 8083;
 		}
 		
