@@ -48,7 +48,8 @@ public class SpecialDataDBHandler {
 		}
 		return instance;
 	}
-	
+
+	// Completed...
 	public long getCurrentMaxId() throws SQLException {
 		
 		ConnectionPool cp = ConnectionPool.getInstance();
@@ -67,7 +68,6 @@ public class SpecialDataDBHandler {
 		} catch (SQLException ex) {
 			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Exception while getting the max id");
-			logger.error("SQLException in getCurrentMaxId()", ex);
 			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw ex;
 		} finally {
@@ -84,6 +84,7 @@ public class SpecialDataDBHandler {
 		return -1;
 	}
 	
+	// Completed...
 	public int getSpecialCodeUsedCount() throws SQLException {
 		
 		ConnectionPool cp = ConnectionPool.getInstance();

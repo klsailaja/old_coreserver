@@ -55,6 +55,35 @@ public class UserProfileController extends BaseController {
 	private static final String EXTERNAL_FILE_PATH = "D:" + File.separator + "Projects" + File.separator + "Games" +
 			File.separator + "terms-and-conditions.pdf";
 	
+	
+	// Completed...
+	@RequestMapping(value = "/user", method = RequestMethod.POST, produces = "application/json")
+	public @ResponseBody UserProfile createUserProfile(@RequestBody UserProfile userProfile) 
+			throws NotAllowedException, InternalException {
+		
+		String userMailId = userProfile.getEmailAddress().trim();
+		logger.info("User Profile Creation called with {}", userMailId);
+		
+		try {
+			UserProfile dbUserProfile = UserProfileHandler.getInstance().createUserProfile(userProfile); 
+			logger.info("createUserProfile returning with {} and {}", dbUserProfile.getEmailAddress(), dbUserProfile.getId());
+			ServerDetails serverDetails = getServerDetails(dbUserProfile.getId());
+			
+			String serverIp = "http://" + serverDetails.getIpAddress() + ":" + String.valueOf(serverDetails.getPort());
+			
+			dbUserProfile.setServerIpAddress(serverIp);
+			
+			return dbUserProfile;
+			
+		} catch (SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
+			logger.error("Exception in createUserProfile", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
+			throw new InternalException("Server Error in createUserProfile");
+		}
+	}
+	
+	// Completed...
 	@RequestMapping(value = "/user/sendcode", method = RequestMethod.POST, produces = "application/json")
 	public @ResponseBody String verifyUserIdGenerateOTP(@RequestBody String eMail) throws NotAllowedException,
 		InternalException {
@@ -111,6 +140,7 @@ public class UserProfileController extends BaseController {
 		}
 	}
 	
+	// Completed...
 	@RequestMapping(value = "/user/verify", method = RequestMethod.POST, produces = "application/json")
 	public @ResponseBody String verifyOTP(@RequestBody OTPDetails otpDetails)
 			throws NotAllowedException, InternalException {
@@ -136,38 +166,16 @@ public class UserProfileController extends BaseController {
 		}
 	}
 	
-	@RequestMapping(value = "/user", method = RequestMethod.POST, produces = "application/json")
-	public @ResponseBody UserProfile createUserProfile(@RequestBody UserProfile userProfile) 
-			throws NotAllowedException, InternalException {
-		
-		String userMailId = userProfile.getEmailAddress().trim();
-		logger.info("User Profile Creation called with {}", userMailId);
-		
-		try {
-			UserProfile dbUserProfile = UserProfileHandler.getInstance().createUserProfile(userProfile); 
-			logger.info("createUserProfile returning with {} and {}", dbUserProfile.getEmailAddress(), dbUserProfile.getId());
-			ServerDetails serverDetails = getServerDetails(dbUserProfile.getId());
-			
-			String serverIp = "http://" + serverDetails.getIpAddress() + ":" + String.valueOf(serverDetails.getPort());
-			
-			dbUserProfile.setServerIpAddress(serverIp);
-			
-			return dbUserProfile;
-			
-		} catch (SQLException ex) {
-			logger.error(QuizConstants.ERROR_PREFIX_START);
-			logger.error("Exception in createUserProfile", ex);
-			logger.error(QuizConstants.ERROR_PREFIX_END);
-			throw new InternalException("Server Error in createUserProfile");
-		}
-	}
 	
+	
+	// Completed ...
 	@RequestMapping(value = "/loggedin/count/{serverIndex}", method = RequestMethod.GET, produces = "application/json") 
 	public @ResponseBody long getLoggedInUserCount(@PathVariable("serverIndex") int serverIndex) throws InternalException {
 		LoggedInUsersCountTask task = LoggedInUsersCountManager.getInstance().createIfDoesNotExist(serverIndex);
 		return task.getUsersCount();
 	}
 	
+	// Completed ...
 	@RequestMapping(value = "/user/{id}", method = RequestMethod.GET, produces = "application/json") 
 	public @ResponseBody UserProfile getUserProfileById(@PathVariable("id") long userId) 
 			throws InternalException {
@@ -182,6 +190,7 @@ public class UserProfileController extends BaseController {
 		}
 	}
 	
+	// Completed ...
 	@RequestMapping(value = "/user/{email}", method = RequestMethod.GET, produces = "application/json")
 	public @ResponseBody UserProfile getUserProfile(@PathVariable("email") String email) 
 			throws InternalException {
@@ -195,6 +204,7 @@ public class UserProfileController extends BaseController {
 		}
 	}
 	
+	// Completed ...
 	@RequestMapping(value="/user/login", method = RequestMethod.POST, produces = "application/json")
 	public @ResponseBody UserProfile login(@RequestBody LoginData loginData) 
 			throws NotAllowedException,InternalException {

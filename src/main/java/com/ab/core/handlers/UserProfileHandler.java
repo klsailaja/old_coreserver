@@ -36,46 +36,7 @@ public class UserProfileHandler {
 		return instance;
 	}
 	
-	public UserProfile getUserProfileById(long userId) throws SQLException {
-		return UserProfileDBHandler.getInstance().getProfileById(userId);
-	}
-	
-	public UserProfile getUserProfileByMailId(String mailId) throws SQLException {
-		return UserProfileDBHandler.getInstance().getProfileByMailid(mailId.trim());
-	}
-	
-	public boolean updateUserProfileDetails(UserProfile userProfile, boolean fromForgotPasswd) 
-			throws SQLException, NotAllowedException {
-		return UserProfileDBHandler.getInstance().updateUserProfileDetails(userProfile, fromForgotPasswd);
-	}
-	
-	public UserProfile login(LoginData loginData) throws SQLException,NotAllowedException {
-		String mailId = loginData.getMailAddress().trim();
-		String passwdHash = loginData.getPassword().trim();
-		logger.debug("Login method called with {} {}", mailId, passwdHash);
-		UserProfile userProfile = getUserProfileByMailId(mailId);
-		logger.debug("userProfile is {}", userProfile);
-		if (userProfile.getId() == 0) {
-			throw new NotAllowedException("User does not exist. Please Register first");
-		}
-		/*if (userProfile.getLoggedIn() == 1) {
-			throw new NotAllowedException("You are already logged in. Please signout first");
-		}*/
-		if (passwdHash.equals(userProfile.getPasswordHash())) {
-			logger.info("Authentication is success for {}", mailId);
-			List<Long> updateLastLoggedIn = new ArrayList<>();
-			updateLastLoggedIn.add(userProfile.getId());
-			UserProfileDBHandler.getInstance().updateLastLoggedTimeInBulkMode(updateLastLoggedIn, 2);
-			return userProfile;
-		}
-		logger.info("Authentication is failure for {}", mailId);
-		throw new NotAllowedException("Password is Wrong. Use Forgot Password Option if required");
-	}
-	
-	public boolean logout(long id) throws SQLException {
-		return UserProfileDBHandler.getInstance().updateLoggedInState(id, 0);
-	}
-	
+	// Completed...
 	public UserProfile createUserProfile(UserProfile userProfile) throws NotAllowedException, SQLException {
 		// Validate the fields
 		// Get with mail and check if not exists
@@ -142,6 +103,48 @@ public class UserProfileHandler {
 		
 		return UserProfileDBHandler.getInstance().createUserProfile(userProfile);
 	}
+	
+	public UserProfile getUserProfileById(long userId) throws SQLException {
+		return UserProfileDBHandler.getInstance().getProfileById(userId);
+	}
+	
+	public UserProfile getUserProfileByMailId(String mailId) throws SQLException {
+		return UserProfileDBHandler.getInstance().getProfileByMailid(mailId.trim());
+	}
+	
+	public boolean updateUserProfileDetails(UserProfile userProfile, boolean fromForgotPasswd) 
+			throws SQLException, NotAllowedException {
+		return UserProfileDBHandler.getInstance().updateUserProfileDetails(userProfile, fromForgotPasswd);
+	}
+	
+	public UserProfile login(LoginData loginData) throws SQLException,NotAllowedException {
+		String mailId = loginData.getMailAddress().trim();
+		String passwdHash = loginData.getPassword().trim();
+		logger.debug("Login method called with {} {}", mailId, passwdHash);
+		UserProfile userProfile = getUserProfileByMailId(mailId);
+		logger.debug("userProfile is {}", userProfile);
+		if (userProfile.getId() == 0) {
+			throw new NotAllowedException("User does not exist. Please Register first");
+		}
+		/*if (userProfile.getLoggedIn() == 1) {
+			throw new NotAllowedException("You are already logged in. Please signout first");
+		}*/
+		if (passwdHash.equals(userProfile.getPasswordHash())) {
+			logger.info("Authentication is success for {}", mailId);
+			List<Long> updateLastLoggedIn = new ArrayList<>();
+			updateLastLoggedIn.add(userProfile.getId());
+			UserProfileDBHandler.getInstance().updateLastLoggedTimeInBulkMode(updateLastLoggedIn, 2);
+			return userProfile;
+		}
+		logger.info("Authentication is failure for {}", mailId);
+		throw new NotAllowedException("Password is Wrong. Use Forgot Password Option if required");
+	}
+	
+	public boolean logout(long id) throws SQLException {
+		return UserProfileDBHandler.getInstance().updateLoggedInState(id, 0);
+	}
+	
+	
 	
 	public ReferalDetails getUserReferals(String referalCode, int startRowNo) throws SQLException {
 		UserProfileDBHandler dbInstance = UserProfileDBHandler.getInstance();

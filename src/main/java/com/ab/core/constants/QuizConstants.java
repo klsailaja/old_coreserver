@@ -8,7 +8,7 @@ public class QuizConstants {
 	
 	
 	
-	public static final long MAX_USERS_COUNT = 10000000;
+	public static final long MAX_USERS_COUNT = 20000000;
 	
 	public static final int SPECIAL_CODE_MAX_COUNT = 5000;
 	
