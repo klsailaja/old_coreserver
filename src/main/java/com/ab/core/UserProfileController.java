@@ -240,6 +240,7 @@ public class UserProfileController extends BaseController {
 		}
 	}
 	
+	// Completed.
 	@RequestMapping(value = "/forgot", method = RequestMethod.POST, produces = "application/json") 
 	public @ResponseBody UserProfile forgotPassword(@RequestBody LoginData loginData) 
 			throws NotAllowedException, InternalException {
@@ -469,7 +470,7 @@ public class UserProfileController extends BaseController {
 		
 		long serverIndex = userId / QuizConstants.MAX_USERS_PER_SERVER;
 		logger.info("userId is: " + userId + " and server index is :" + serverIndex);
-		ipAddr = "192.168.1.8";
+		ipAddr = "192.168.1.5";
 		if (serverIndex == 0) {
 			//ipAddr = "192.168.43.188";
 			//ipAddr = "192.168.1.6";

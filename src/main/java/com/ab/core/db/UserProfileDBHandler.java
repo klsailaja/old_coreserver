@@ -526,6 +526,7 @@ public class UserProfileDBHandler {
 		}
 	}
 	
+	// Completed.
 	public UserProfile getProfileByMailid(String mailId) throws SQLException {
 		String sql = GET_USER_PROFILE_BY_MAIL_ID;
 		
@@ -540,6 +541,7 @@ public class UserProfileDBHandler {
 		}
 	}
 	
+	// Completed.
 	public boolean updateUserProfileDetails(UserProfile userProfile, boolean fromForgotPasswd) 
 			throws SQLException, NotAllowedException {
 
@@ -647,6 +649,7 @@ public class UserProfileDBHandler {
 		}
 	}
 	
+	// Completed ...
 	public void updateLastLoggedTimeInBulkMode(List<Long> playerIds, int batchSize) throws SQLException {
 		
 		logger.info("In updateLastLoggedTimeInBulkMode with size {}", playerIds.size());

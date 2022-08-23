@@ -108,21 +108,23 @@ public class UserProfileHandler {
 		return UserProfileDBHandler.getInstance().getProfileById(userId);
 	}
 	
+	// Completed.
 	public UserProfile getUserProfileByMailId(String mailId) throws SQLException {
 		return UserProfileDBHandler.getInstance().getProfileByMailid(mailId.trim());
 	}
 	
+	// Completed.
 	public boolean updateUserProfileDetails(UserProfile userProfile, boolean fromForgotPasswd) 
 			throws SQLException, NotAllowedException {
 		return UserProfileDBHandler.getInstance().updateUserProfileDetails(userProfile, fromForgotPasswd);
 	}
 	
+	// Completed.
 	public UserProfile login(LoginData loginData) throws SQLException,NotAllowedException {
 		String mailId = loginData.getMailAddress().trim();
 		String passwdHash = loginData.getPassword().trim();
-		logger.debug("Login method called with {} {}", mailId, passwdHash);
 		UserProfile userProfile = getUserProfileByMailId(mailId);
-		logger.debug("userProfile is {}", userProfile);
+		logger.info("userProfile is {}", userProfile);
 		if (userProfile.getId() == 0) {
 			throw new NotAllowedException("User does not exist. Please Register first");
 		}
