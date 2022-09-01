@@ -1,10 +1,10 @@
 package com.ab.core;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.BufferedInputStream;
 import java.net.URLConnection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -121,11 +121,12 @@ public class UserProfileController extends BaseController {
 				Mail mail = new Mail();
 		        
 				mail.setMailFrom(QuizConstants.FROM_MAIL_ID);
+				
 				mail.setMailTo(eMail);
 				mail.setMailSubject(QuizConstants.VERIFY_MAIL_ID_SUBJECT);
-	        
-				mail.setMailContent(QuizConstants.VERIFY_MAIL_ID_BODY + passwd 
-	        		+ "\n\nThanks\n" + QuizConstants.VERIFY_MAIL_ID_SENDER_NAME);
+				
+				String mailContents = String.format(QuizConstants.VERIFY_MAIL_CONTENTS, passwd); 
+				mail.setMailContent(mailContents);
 				
 				LazyScheduler.getInstance().submit(new SendMailTask(mail));
 			}

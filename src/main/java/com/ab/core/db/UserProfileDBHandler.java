@@ -605,10 +605,10 @@ public class UserProfileDBHandler {
         
 			mail.setMailFrom(QuizConstants.FROM_MAIL_ID);
 			mail.setMailTo(userProfile.getEmailAddress().trim());
-			mail.setMailSubject("Password Reset");
-        
-			mail.setMailContent("Your password has been reset. Please login with " + passwd 
-        		+ " If not reset by you, please change the password using ChangePassword Option in My Profile\n\nThanks\n" + QuizConstants.VERIFY_MAIL_ID_SENDER_NAME);
+			mail.setMailSubject(QuizConstants.FORGOT_MAIL_SUBJECT);
+			
+			String mailContents = String.format(QuizConstants.FORGOT_MAIL_CONTENTS, passwd);
+			mail.setMailContent(mailContents);
 			
 			LazyScheduler.getInstance().submit(new SendMailTask(mail));
 		}

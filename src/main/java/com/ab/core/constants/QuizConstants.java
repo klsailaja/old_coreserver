@@ -6,8 +6,6 @@ public class QuizConstants {
 	
 	public static final String ERROR_PREFIX_END = "ERROR_END:***********************";
 	
-	
-	
 	public static final long MAX_USERS_COUNT = 20000000;
 	
 	public static final int SPECIAL_CODE_MAX_COUNT = 5000;
@@ -22,13 +20,27 @@ public class QuizConstants {
 	
 	public static final int MAX_BALANCE_ALLOWED = 200000;
 	
-	public static final String FROM_MAIL_ID = "ggraj.pec@gmail.com";
+	public static int TESTMODE = 1;
+	
+	// Mail properties..
+	
+	public static final String FROM_MAIL_ID = "satyahasini25@gmail.com";
 	
 	public static final String VERIFY_MAIL_ID_SUBJECT = "4-digit Verification Code";
 	
-	public static final String VERIFY_MAIL_ID_BODY = "Your 4-digit verification code :";
-	
 	public static final String VERIFY_MAIL_ID_SENDER_NAME = "TeluguQuiz";
 	
-	public static int TESTMODE = 1;
+	public static final String VERIFY_MAIL_ID_BODY = "Your 4-digit verification code : %s";
+	
+	public static final String VERIFY_MAIL_CONTENTS = "<html><p>Your 4-digit verification code : <b>%s</b>" 
+				+ "<br><br>Thanks<br>"
+				+ VERIFY_MAIL_ID_SENDER_NAME
+				+ "</p></html>";
+	
+	public static final String FORGOT_MAIL_SUBJECT = "Password Reset";
+	
+	public static final String FORGOT_MAIL_CONTENTS = "<html><p><b>Your password has been reset as requested</b>. New password is: <b>%s</b>."
+				+ "If not reset by you, please change the password using ChangePassword Option in My Profile<br><br>Thanks<br>" 
+				+ VERIFY_MAIL_ID_SENDER_NAME
+				+ "</p></html>";
 }
