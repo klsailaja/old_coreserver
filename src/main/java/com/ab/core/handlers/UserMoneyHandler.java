@@ -13,6 +13,7 @@ import com.ab.core.common.LazyScheduler;
 import com.ab.core.constants.QuizConstants;
 import com.ab.core.constants.WithdrawReqState;
 import com.ab.core.db.ConnectionPool;
+import com.ab.core.db.UserAccumulatedResultsDBHandler;
 import com.ab.core.db.UserMoneyDBHandler;
 import com.ab.core.exceptions.NotAllowedException;
 import com.ab.core.helper.SingleThreadMoneyUpdater;
@@ -66,7 +67,15 @@ public class UserMoneyHandler {
 				throw new NotAllowedException("No Enough Cash. Please add money");
 			}
 			if (userMoney.getAmount() > QuizConstants.MAX_BALANCE_ALLOWED) {
-				throw new NotAllowedException("Please raise withdraw request. Amount exceeds max limit.");
+				throw new NotAllowedException("Not allowed to play. \n Please raise withdraw request as current balance exceeds max limit.");
+			}
+			long[] userAccumulatedResults = UserAccumulatedResultsDBHandler.getInstance().getAccumulatedResults(userId);
+			userMoney.setWinAmount(userAccumulatedResults[0]);
+			userMoney.setReferAmount(userAccumulatedResults[1]);
+			if (userMoney.getWinAmount() > 50000) {
+				if (usersMoneyDetails.getkycDocsStatus() == 0) {
+					throw new NotAllowedException("Not allowed to play. Please complete the KYC Docs Upload process");
+				}
 			}
 		}
 		
