@@ -10,7 +10,7 @@ public class QuizConstants {
 	
 	public static final int SPECIAL_CODE_MAX_COUNT = 5000;
 	
-	public static final int CURRENT_SERVERS_COUNT = 30;
+	public static final int CURRENT_SERVERS_COUNT = 31;
 	
 	public static long MAX_USERS_PER_SERVER = 500000;
 	
@@ -21,6 +21,8 @@ public class QuizConstants {
 	public static final int MAX_BALANCE_ALLOWED = 200000;
 	
 	public static int TESTMODE = 1;
+	
+	public static boolean MAINTENANCE_MODE = false;
 	
 	// Mail properties..
 	

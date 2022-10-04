@@ -69,12 +69,15 @@ public class UserProfileController extends BaseController {
 			logger.info("createUserProfile returning with {} and {}", dbUserProfile.getEmailAddress(), dbUserProfile.getId());
 			ServerDetails serverDetails = getServerDetails(dbUserProfile.getId());
 			
-			String serverIp = "http://" + serverDetails.getIpAddress() + ":" + String.valueOf(serverDetails.getPort());
-			
+			String serverIp = null;
+			if (serverDetails.getPort() != -1) {
+				serverIp = "http://" + serverDetails.getIpAddress() + ":" + String.valueOf(serverDetails.getPort());
+			} else {
+				serverIp = serverDetails.getIpAddress();
+			}
 			dbUserProfile.setServerIpAddress(serverIp);
 			
 			return dbUserProfile;
-			
 		} catch (SQLException ex) {
 			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Exception in createUserProfile", ex);
@@ -215,7 +218,12 @@ public class UserProfileController extends BaseController {
 			logger.info("login returned with {} : {} : {}", loginData.getMailAddress(), loginData.getPassword(), loginResult);
 			ServerDetails serverDetails = getServerDetails(loginResult.getId());
 			
-			String serverIp = "http://" + serverDetails.getIpAddress() + ":" + String.valueOf(serverDetails.getPort());
+			String serverIp = null;
+			if (serverDetails.getPort() != -1) {
+				serverIp = "http://" + serverDetails.getIpAddress() + ":" + String.valueOf(serverDetails.getPort());
+			} else {
+				serverIp = serverDetails.getIpAddress();
+			}
 			
 			loginResult.setServerIpAddress(serverIp);
 			return loginResult;
@@ -466,24 +474,44 @@ public class UserProfileController extends BaseController {
 	private ServerDetails getServerDetails(long userId) {
 		
 		ServerDetails serverDetails = new ServerDetails();
-		String ipAddr = null;
+		
+		String ipAddr = "Backend Problem. Please try after some time";
 		int serverPort = -1;
 		
 		long serverIndex = userId / QuizConstants.MAX_USERS_PER_SERVER;
+		
 		logger.info("userId is: " + userId + " and server index is :" + serverIndex);
-		ipAddr = "192.168.1.5";
+		
+		String testIpAddress = "192.168.1.6";
+		
 		if (serverIndex == 0) {
-			//ipAddr = "192.168.43.188";
-			//ipAddr = "192.168.1.6";
+			ipAddr = testIpAddress;
 			serverPort = 8081;
 		} else if (serverIndex == 1) {
-			//ipAddr = "192.168.43.188";
-			//ipAddr = "192.168.1.6";
+			ipAddr = testIpAddress;
 			serverPort = 8082;
 		} else if (serverIndex == 2) {
-			//ipAddr = "192.168.43.188";
-			//ipAddr = "192.168.1.6";
+			ipAddr = testIpAddress;
 			serverPort = 8083;
+		}
+	
+		logger.info("ipAddr is: " + ipAddr + " and serverPort is :" + serverPort);
+		if (serverPort == -1) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
+			logger.error("Please setup a server and assign the ip address");
+			logger.error("Current userId is : {} ip is : {} and server port is : {}", userId, ipAddr, serverPort);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
+			
+		}
+		
+		if ((serverIndex + 1) >= QuizConstants.CURRENT_SERVERS_COUNT) {
+			ipAddr = "Max Count Reached. No More Registrations allowed";
+			serverPort = -1;
+		}
+		
+		if (QuizConstants.MAINTENANCE_MODE) {
+			ipAddr = "Server maintenance now. Please try after some time";
+			serverPort = -1;
 		}
 		
 		serverDetails.setIpAddress(ipAddr);
