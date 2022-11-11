@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.ab.core.constants.UserMoneyAccountType;
 import com.ab.core.constants.UserMoneyOperType;
+import com.ab.core.constants.WinMoneyCreditStatus;
 import com.ab.core.db.ConnectionPool;
 import com.ab.core.db.UserMoneyDBHandler;
 import com.ab.core.pojo.MoneyTransaction;
@@ -122,9 +123,30 @@ public class MoneyUpdater {
 		UserAccumulatedUpdateTask run = new UserAccumulatedUpdateTask(userIdVsWinMoney, userIdVsReferMoney);
 		SingleThreadMoneyUpdater.getInstance().submit(run);
 		
+		int totalWinTransactionsSize = moneyUpdateResults.size();
+		int failedOperationsSize = 0;
+		int successOperationsSize = 0;
+		for (int index : moneyUpdateResults) {
+			if (index > 0) {
+				successOperationsSize++;
+			} else if (index == 0) {
+				failedOperationsSize++;
+			}
+		}
+		
 		clearStates();
 		
-		WinnersMoneyUpdateStatus.getInstance().setStatusToComplete(usersMoneyDetails.getTrackStatusKey());
+		int moneyCreditState = WinMoneyCreditStatus.IN_PROGRESS.getId();
+		if (successOperationsSize == totalWinTransactionsSize) {
+			moneyCreditState = WinMoneyCreditStatus.ALL_SUCCESS.getId();
+		} else if (failedOperationsSize == totalWinTransactionsSize) {
+			moneyCreditState = WinMoneyCreditStatus.ALL_FAIL.getId();
+		} else if ((successOperationsSize + failedOperationsSize) == totalWinTransactionsSize) {
+			moneyCreditState = WinMoneyCreditStatus.PARTIAL_RESULTS.getId();
+		}
+		
+		WinnersMoneyUpdateStatus.getInstance().setStatusToComplete(usersMoneyDetails.getTrackStatusKey(), 
+				moneyCreditState);
 		
 		logger.info("Total Time in MoneyUpdater performTransactions {}", (System.currentTimeMillis() - startTime));
 		
@@ -205,6 +227,9 @@ public class MoneyUpdater {
 					operResult = 1;
 				}
 				transaction.getTransaction().setOperResult(operResult);
+				if (operResult == 1) {
+					transaction.getTransaction().setExtraDetails("");
+				}
 			}
 			
 			List<MyTransaction> transactionsList = new ArrayList<>();

@@ -10,6 +10,7 @@ import java.util.StringTokenizer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ab.core.constants.WinMoneyCreditStatus;
 import com.ab.core.pojo.GameSlotMoneyStatus;
 import com.ab.core.pojo.SlotGamesWinMoneyStatus;
 
@@ -46,20 +47,20 @@ public class WinnersMoneyUpdateStatus {
 		long slotStartTime = Long.parseLong(strTokenizer.nextToken());
 		
 		slotStatus.setServerId(serverIdKey);
-		slotStatus.setMoneyCreditedStatus(0); // 0 - means not completed
+		slotStatus.setMoneyCreditedStatus(WinMoneyCreditStatus.IN_PROGRESS.getId()); 
 		slotStatus.setSlotGameStartTime(slotStartTime);
 		
 		serverIdVsGameSlotCompleteStatus.put(trackKey, slotStatus);
 	}
 	
-	public synchronized void setStatusToComplete(String trackKey) {
+	public synchronized void setStatusToComplete(String trackKey, int state) {
 		
 		if (trackKey == null) {
 			return;
 		}
 		
 		GameSlotMoneyStatus slotStatus = serverIdVsGameSlotCompleteStatus.get(trackKey);
-		slotStatus.setMoneyCreditedStatus(1);
+		slotStatus.setMoneyCreditedStatus(state);
 		serverIdVsGameSlotCompleteStatus.put(trackKey, slotStatus);
 	}
 	
@@ -72,7 +73,7 @@ public class WinnersMoneyUpdateStatus {
         {
         	String mapKey = it.getKey();
         	GameSlotMoneyStatus status = it.getValue();
-        	if (status.getMoneyCreditedStatus() == 1) {
+        	if (status.getMoneyCreditedStatus() != WinMoneyCreditStatus.IN_PROGRESS.getId()) {
         		long timeElapsed = System.currentTimeMillis() - status.getSlotGameStartTime();
         		if (timeElapsed >= (10 * 60 * 1000)) {
         			toDelKeys.add(mapKey);

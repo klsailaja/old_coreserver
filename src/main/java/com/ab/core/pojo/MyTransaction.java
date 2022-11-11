@@ -13,6 +13,7 @@ public class MyTransaction {
 	private long openingBalance;
 	private long closingBalance;
 	private String comments;
+	private String extraDetails;
 	private int isWin;
 	
 	private int sNo;
@@ -44,6 +45,13 @@ public class MyTransaction {
 	}
 	public void setComment(String comment) {
 		this.comments = comment;
+	}
+	
+	public String getExtraDetails() {
+		return extraDetails;
+	}
+	public void setExtraDetails(String extraDetails) {
+		this.extraDetails = extraDetails;
 	}
 	
 	public long getId() {
