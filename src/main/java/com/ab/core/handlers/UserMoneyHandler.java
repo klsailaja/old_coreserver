@@ -47,12 +47,14 @@ public class UserMoneyHandler {
 		return userMoneyDb;
 	}
 	
-	public List<Integer> performUserMoneyOperation(UsersCompleteMoneyDetails usersMoneyDetails) 
+	public synchronized List<Integer> performUserMoneyOperation(UsersCompleteMoneyDetails usersMoneyDetails) 
 			throws NotAllowedException, SQLException {
 		
 		String trackKey = usersMoneyDetails.getTrackStatusKey();
 		logger.info("This is in performUserMoneyOperation with trackKey: {} , money transactions size {}",
 				trackKey, usersMoneyDetails.getUsersMoneyTransactionList().size());
+		logger.info("{} in performUserMoneyOperation with trackKey: {}", usersMoneyDetails.getLogTag(), trackKey);
+		
 		
 		boolean checkMoney = usersMoneyDetails.isCheckMoney();
 		

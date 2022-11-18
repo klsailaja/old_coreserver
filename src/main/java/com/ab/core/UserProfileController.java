@@ -46,6 +46,7 @@ import com.ab.core.pojo.UserProfile;
 import com.ab.core.tasks.LoggedInUsersCountTask;
 import com.ab.core.tasks.SendMailTask;
 import com.ab.core.tasks.UpdateLastLoggedInTimeTask;
+import com.ab.core.common.TAGS;
 
 @RestController
 public class UserProfileController extends BaseController {
@@ -56,17 +57,31 @@ public class UserProfileController extends BaseController {
 			File.separator + "terms-and-conditions.pdf";
 	
 	
+	// Completed ...
+	@RequestMapping(value = "/loggedin/count/{serverIndex}", 
+			method = RequestMethod.GET, produces = "application/json") 
+	public @ResponseBody long getLoggedInUserCount(@PathVariable("serverIndex") int serverIndex) 
+			throws InternalException {
+		logger.debug("{} server index: {} getLoggedInUserCount", TAGS.LOGGED_IN_USER_COUNT, serverIndex);
+		LoggedInUsersCountTask task = LoggedInUsersCountManager.getInstance().createIfDoesNotExist(serverIndex);
+		long count = task.getUsersCount();
+		logger.debug("{} server index: {} getLoggedInUserCount result: {}", 
+				TAGS.LOGGED_IN_USER_COUNT, serverIndex, count);
+		return count;
+	}
+	
 	// Completed...
 	@RequestMapping(value = "/user", method = RequestMethod.POST, produces = "application/json")
 	public @ResponseBody UserProfile createUserProfile(@RequestBody UserProfile userProfile) 
 			throws NotAllowedException, InternalException {
 		
 		String userMailId = userProfile.getEmailAddress().trim();
-		logger.info("User Profile Creation called with {}", userMailId);
+		logger.info("{} User Profile Creation called with {}", TAGS.CREATE_USER, userMailId);
 		
 		try {
 			UserProfile dbUserProfile = UserProfileHandler.getInstance().createUserProfile(userProfile); 
-			logger.info("createUserProfile returning with {} and {}", dbUserProfile.getEmailAddress(), dbUserProfile.getId());
+			logger.info("{} createUserProfile returning with {} and {}", TAGS.CREATE_USER,
+					dbUserProfile.getEmailAddress(), dbUserProfile.getId());
 			ServerDetails serverDetails = getServerDetails(dbUserProfile.getId());
 			
 			String serverIp = null;
@@ -80,7 +95,8 @@ public class UserProfileController extends BaseController {
 			return dbUserProfile;
 		} catch (SQLException ex) {
 			logger.error(QuizConstants.ERROR_PREFIX_START);
-			logger.error("Exception in createUserProfile", ex);
+			logger.error("{} Exception in createUserProfile", TAGS.CREATE_USER);
+			logger.error("Exception is: ", ex);
 			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw new InternalException("Server Error in createUserProfile");
 		}
@@ -93,7 +109,7 @@ public class UserProfileController extends BaseController {
 		
 		eMail = eMail.trim();
 		eMail = eMail.replace("\"", "");
-		logger.info("This is in verifyUserIdGenerateOTP {}", eMail);
+		logger.info("{} This is in verifyUserIdGenerateOTP {}", TAGS.CREATE_USER_SEND_OTP, eMail);
 		
 		try {
 			UserProfile userProfile = UserProfileHandler.getInstance().getUserProfileByMailId(eMail);
@@ -137,8 +153,8 @@ public class UserProfileController extends BaseController {
 			return String.valueOf(true);
 		} catch(SQLException ex) {
 			logger.error(QuizConstants.ERROR_PREFIX_START);
-			logger.error("Error in verifyUserIdGenerateOTP for {}", eMail);
-			logger.error(ex);
+			logger.error("{} Error in verifyUserIdGenerateOTP for {}", TAGS.CREATE_USER_SEND_OTP, eMail);
+			logger.error("Exception is: ", ex);
 			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw new InternalException("Server Error in verifyUserIdGenerateOTP");
 		}
@@ -148,9 +164,9 @@ public class UserProfileController extends BaseController {
 	@RequestMapping(value = "/user/verify", method = RequestMethod.POST, produces = "application/json")
 	public @ResponseBody String verifyOTP(@RequestBody OTPDetails otpDetails)
 			throws NotAllowedException, InternalException {
-		
 		String eMail = otpDetails.getMailId().trim();
 		String passwdHash = otpDetails.getOtp_hash().trim();
+		logger.info("{} In verifyOTP for {}", TAGS.CREATE_USER_SEND_OTP, eMail);
 		
 		try {
 			OTPDetails dbEntry = VerifyUserProfileDBHandler.getInstance().getOTPDetailsByMailId(eMail);
@@ -164,26 +180,17 @@ public class UserProfileController extends BaseController {
 			return String.valueOf(false);
 		} catch (SQLException ex) {
 			logger.error(QuizConstants.ERROR_PREFIX_START);
-			logger.error("Error while OTP Verify process", ex);
+			logger.error("{} Error while OTP Verify process", TAGS.CREATE_USER_SEND_OTP);
+			logger.error("Exception is: ", ex);
 			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw new InternalException("Server Error while OTP Verify process");
 		}
-	}
-	
-	
-	
-	// Completed ...
-	@RequestMapping(value = "/loggedin/count/{serverIndex}", method = RequestMethod.GET, produces = "application/json") 
-	public @ResponseBody long getLoggedInUserCount(@PathVariable("serverIndex") int serverIndex) throws InternalException {
-		LoggedInUsersCountTask task = LoggedInUsersCountManager.getInstance().createIfDoesNotExist(serverIndex);
-		return task.getUsersCount();
 	}
 	
 	// Completed ...
 	@RequestMapping(value = "/user/{id}", method = RequestMethod.GET, produces = "application/json") 
 	public @ResponseBody UserProfile getUserProfileById(@PathVariable("id") long userId) 
 			throws InternalException {
-		
 		try {
 			return UserProfileHandler.getInstance().getUserProfileById(userId);
 		} catch (SQLException ex) {
@@ -212,10 +219,11 @@ public class UserProfileController extends BaseController {
 	@RequestMapping(value="/user/login", method = RequestMethod.POST, produces = "application/json")
 	public @ResponseBody UserProfile login(@RequestBody LoginData loginData) 
 			throws NotAllowedException,InternalException {
-		logger.info("login called with {} ", loginData.getMailAddress());
+		logger.info("{} login called with {} ", TAGS.AUTH, loginData.getMailAddress());
 		try {
 			UserProfile loginResult = UserProfileHandler.getInstance().login(loginData); 
-			logger.info("login returned with {} : {} : {}", loginData.getMailAddress(), loginData.getPassword(), loginResult);
+			logger.info("{} login returned with {} : {} : {}", TAGS.AUTH,  
+					loginData.getMailAddress(), loginData.getPassword(), loginResult);
 			ServerDetails serverDetails = getServerDetails(loginResult.getId());
 			
 			String serverIp = null;
@@ -229,7 +237,8 @@ public class UserProfileController extends BaseController {
 			return loginResult;
 		} catch(SQLException ex) {
 			logger.error(QuizConstants.ERROR_PREFIX_START);
-			logger.error("Exception in login", ex);
+			logger.error("{} Exception in login", TAGS.AUTH);
+			logger.error("Exception is: ", ex);
 			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw new InternalException("Server Error in login");
 		}
@@ -237,7 +246,6 @@ public class UserProfileController extends BaseController {
 	
 	@RequestMapping(value="/user/logout/{id}", method = RequestMethod.GET, produces = "application/json")
 	public @ResponseBody String logout(@PathVariable("id") long id) throws InternalException {
-		logger.info("logout called with {} ", id);
 		try {
 			boolean result = UserProfileDBHandler.getInstance().updateLoggedInState(id, 0);
 			return String.valueOf(result);
@@ -254,7 +262,7 @@ public class UserProfileController extends BaseController {
 	public @ResponseBody UserProfile forgotPassword(@RequestBody LoginData loginData) 
 			throws NotAllowedException, InternalException {
 		
-		logger.info("forgotPassword is called with {}", loginData.getMailAddress());
+		logger.info("{} forgotPassword is called with {}", TAGS.FORGOT_PASSWD ,loginData.getMailAddress());
 		try {
 			UserProfile userProfile = new UserProfile();
 			userProfile.setEmailAddress(loginData.getMailAddress());
@@ -271,7 +279,8 @@ public class UserProfileController extends BaseController {
 			return dbProfile;
 		} catch (SQLException ex) {
 			logger.error(QuizConstants.ERROR_PREFIX_START);
-			logger.error("Exception in forgotPassword", ex);
+			logger.error("{} Exception in forgotPassword", TAGS.FORGOT_PASSWD);
+			logger.error("Exception is: ", ex);
 			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw new InternalException("Server Error in forgotPassword");
 		}
@@ -286,7 +295,8 @@ public class UserProfileController extends BaseController {
 	@RequestMapping(value = "/update", method = RequestMethod.POST, produces = "application/json")
 	public @ResponseBody UserProfile updateUserProfile(@RequestBody UserProfile userProfile)
 			throws NotAllowedException, InternalException {
-		logger.info("updateUserProfile is called with {}", userProfile.getEmailAddress().trim());
+		logger.info("{} updateUserProfile is called with {}", TAGS.UPDATE_USER,
+				userProfile.getEmailAddress().trim());
 		try {
 			boolean updateResult = UserProfileHandler.getInstance().updateUserProfileDetails(userProfile, false);
 			if (!updateResult) {
@@ -294,11 +304,13 @@ public class UserProfileController extends BaseController {
 			}
 			
 			UserProfile dbProfile = UserProfileHandler.getInstance().getUserProfileByMailId(userProfile.getEmailAddress());
-			logger.info("updateUserProfile returning with {} and {}", dbProfile.getEmailAddress(), dbProfile.getId());
+			logger.info("{} updateUserProfile returning with {} and {}", TAGS.UPDATE_USER, 
+					dbProfile.getEmailAddress(), dbProfile.getId());
 			return dbProfile;
 		} catch (SQLException ex) {
 			logger.error(QuizConstants.ERROR_PREFIX_START);
-			logger.error("Exception in updateUserProfile", ex);
+			logger.error("{} Exception in updateUserProfile", TAGS.UPDATE_USER);
+			logger.error("Exception is: ", ex);
 			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw new InternalException("Server Error in updateUserProfile");
 		}
@@ -307,11 +319,11 @@ public class UserProfileController extends BaseController {
 	@RequestMapping(value = "/user/mreferal/{myreferalcode}/{pageNum}", method = RequestMethod.GET, produces = "application/json") 
 	public @ResponseBody ReferalDetails getUserReferals(@PathVariable("myreferalcode") String referalCode,
 			@PathVariable("pageNum") int pageNum) throws InternalException {
-		logger.info("getUserReferals is called with code {} : pageNo {}", referalCode, pageNum);
+		logger.debug("getUserReferals is called with code {} : pageNo {}", referalCode, pageNum);
 		try {
 			UserProfileHandler profileHandler = UserProfileHandler.getInstance(); 
 			ReferalDetails referalDetails = profileHandler.getUserReferals(referalCode, pageNum);
-			logger.info("Referals list size is {} for referal code {}", referalDetails.getReferalList().size(), referalCode);
+			logger.debug("Referals list size is {} for referal code {}", referalDetails.getReferalList().size(), referalCode);
 			return referalDetails;
 		} catch (SQLException ex) {
 			logger.error(QuizConstants.ERROR_PREFIX_START);
@@ -325,11 +337,11 @@ public class UserProfileController extends BaseController {
 			produces = "application/json") 
 	public @ResponseBody TransactionsHolder getTransactions(@PathVariable("userProfileId") long userProfileId,
 			@PathVariable("pageNum") int pageNum, @PathVariable("accType") int accType) throws InternalException, NotAllowedException {
-		logger.info("getTransactions is called with user id {} : pageNo {}", userProfileId, pageNum);
+		logger.debug("getTransactions is called with user id {} : pageNo {}", userProfileId, pageNum);
 		try {
 			UserProfileHandler profileHandler = UserProfileHandler.getInstance();
 			TransactionsHolder transactionsDetails = profileHandler.getTransactionsList(userProfileId, pageNum, accType); 
-			logger.info("Transactions list size is {} for user profile id {}", transactionsDetails.getTransactionsList().size(), userProfileId);
+			logger.debug("Transactions list size is {} for user profile id {}", transactionsDetails.getTransactionsList().size(), userProfileId);
 			return transactionsDetails;
 		} catch (SQLException ex) {
 			logger.error(QuizConstants.ERROR_PREFIX_START);
@@ -413,7 +425,7 @@ public class UserProfileController extends BaseController {
 					mimeType = "application/octet-stream";
 				}
 	
-				logger.info("File exists" + mimeType);
+				logger.debug("File exists" + mimeType);
 				response.setContentType(mimeType);
 	
 				/**
@@ -439,9 +451,9 @@ public class UserProfileController extends BaseController {
 				FileCopyUtils.copy(inputStream, response.getOutputStream());
 			}
 		} catch(IOException ex) {
-			logger.error(QuizConstants.ERROR_PREFIX_START);
-			logger.error("IOException at ", ex);
-			logger.error(QuizConstants.ERROR_PREFIX_END);
+			//logger.error(QuizConstants.ERROR_PREFIX_START);
+			//logger.error("IOException at ", ex);
+			//logger.error(QuizConstants.ERROR_PREFIX_END);
 		}
 	}
 	
@@ -505,12 +517,12 @@ public class UserProfileController extends BaseController {
 		}
 		
 		if ((serverIndex + 1) >= QuizConstants.CURRENT_SERVERS_COUNT) {
-			ipAddr = "Max Count Reached. No More Registrations allowed";
+			ipAddr = "Max Count Reached. No More Registrations allowed. Please try later";
 			serverPort = -1;
 		}
 		
 		if (QuizConstants.MAINTENANCE_MODE) {
-			ipAddr = "Server maintenance now. Please try after some time";
+			ipAddr = "Server in maintenance now. Please try after some time";
 			serverPort = -1;
 		}
 		

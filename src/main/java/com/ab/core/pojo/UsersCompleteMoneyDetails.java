@@ -7,6 +7,7 @@ public class UsersCompleteMoneyDetails {
 	private boolean checkMoney;
 	private List<MoneyTransaction> usersMoneyTransactionList;
 	private int kycDocsStatus;  // 1 means approved
+	private String logTag;
 	
 	public boolean isCheckMoney() {
 		return checkMoney;
@@ -32,5 +33,12 @@ public class UsersCompleteMoneyDetails {
 	}
 	public void setTrackStatusKey(String trackStatusKey) {
 		this.trackStatusKey = trackStatusKey;
+	}
+	
+	public String getLogTag() {
+		return logTag;
+	}
+	public void setLogTag(String logTag) {
+		this.logTag = logTag;
 	}
 }

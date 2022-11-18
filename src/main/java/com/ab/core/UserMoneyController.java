@@ -16,6 +16,7 @@ import com.ab.core.constants.QuizConstants;
 import com.ab.core.db.UserAccumulatedResultsDBHandler;
 import com.ab.core.exceptions.InternalException;
 import com.ab.core.exceptions.NotAllowedException;
+import com.ab.core.handlers.PaymentProgressCheck;
 import com.ab.core.handlers.UserMoneyHandler;
 import com.ab.core.helper.WinnersMoneyUpdateStatus;
 import com.ab.core.pojo.SlotGamesWinMoneyStatus;
@@ -64,13 +65,14 @@ public class UserMoneyController extends BaseController {
 	@RequestMapping(value = "/money/update", method = RequestMethod.POST, produces = "application/json")
 	public @ResponseBody List<Integer> loadMoney(@RequestBody UsersCompleteMoneyDetails completeDetails)
 			throws InternalException {
-		
-		logger.info("This is in loadMoney with size : {}", completeDetails.getUsersMoneyTransactionList().size());
+		logger.info("{} This is in Money Updater with records size", completeDetails.getLogTag(),
+				completeDetails.getUsersMoneyTransactionList().size());
 		try {
 			return UserMoneyHandler.getInstance().performUserMoneyOperation(completeDetails);
 		} catch (SQLException ex) {
 			logger.error(QuizConstants.ERROR_PREFIX_START);
-			logger.error("Exception in loadMoney", ex);
+			logger.error("{} Exception in Money Updater", completeDetails.getLogTag());
+			logger.error("Exception is: ", ex);
 			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw new InternalException("Server Error in loadMoney");
 		}
@@ -78,10 +80,15 @@ public class UserMoneyController extends BaseController {
 	
 	@RequestMapping(value = "/money/wd", method = RequestMethod.POST, produces = "application/json")
 	public @ResponseBody boolean performWithdraw(@RequestBody WithdrawMoney wdMoney) throws InternalException {
+		if (PaymentProgressCheck.getInstance().isWinMoneyPaymentInProgress(wdMoney.getUid())) {
+			throw new InternalException("Win Money Payment in Progress. Try Later");
+		}
 		try {
 			return UserMoneyHandler.getInstance().performWitdrawOperation(wdMoney);
 		} catch (SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Exception in performWithdraw", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw new InternalException("Server Error in performWithdraw");
 		}
 	}
