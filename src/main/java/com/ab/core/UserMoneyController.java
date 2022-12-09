@@ -19,7 +19,7 @@ import com.ab.core.exceptions.NotAllowedException;
 import com.ab.core.handlers.PaymentProgressCheck;
 import com.ab.core.handlers.UserMoneyHandler;
 import com.ab.core.helper.WinnersMoneyUpdateStatus;
-import com.ab.core.pojo.SlotGamesWinMoneyStatus;
+import com.ab.core.pojo.GameSlotMoneyStatus;
 import com.ab.core.pojo.UserMoney;
 import com.ab.core.pojo.UsersCompleteMoneyDetails;
 import com.ab.core.pojo.WithdrawMoney;
@@ -94,7 +94,7 @@ public class UserMoneyController extends BaseController {
 	}
 	
 	@RequestMapping(value = "/money/update/{serverId}", method = RequestMethod.GET, produces = "application/json")
-	public @ResponseBody List<SlotGamesWinMoneyStatus> getGamesSlotMoneyStatus(@PathVariable("serverId") String serverId) 
+	public @ResponseBody List<GameSlotMoneyStatus> getGamesSlotMoneyStatus(@PathVariable("serverId") String serverId) 
 			throws InternalException {
 		return WinnersMoneyUpdateStatus.getInstance().getServerIdStatus(serverId);
 	}

@@ -12,7 +12,6 @@ import org.apache.logging.log4j.Logger;
 
 import com.ab.core.constants.WinMoneyCreditStatus;
 import com.ab.core.pojo.GameSlotMoneyStatus;
-import com.ab.core.pojo.SlotGamesWinMoneyStatus;
 
 public class WinnersMoneyUpdateStatus {
 	private static WinnersMoneyUpdateStatus instance = null;
@@ -46,21 +45,27 @@ public class WinnersMoneyUpdateStatus {
 		String serverIdKey = strTokenizer.nextToken();
 		long slotStartTime = Long.parseLong(strTokenizer.nextToken());
 		
+		slotStatus.setTrackKey(trackKey);
 		slotStatus.setServerId(serverIdKey);
-		slotStatus.setMoneyCreditedStatus(WinMoneyCreditStatus.IN_PROGRESS.getId()); 
+		slotStatus.setOverallStatus(WinMoneyCreditStatus.IN_PROGRESS.getId()); 
 		slotStatus.setSlotGameStartTime(slotStartTime);
 		
 		serverIdVsGameSlotCompleteStatus.put(trackKey, slotStatus);
 	}
 	
-	public synchronized void setStatusToComplete(String trackKey, int state) {
+	public synchronized void setStatusToComplete(String trackKey, GameSlotMoneyStatus statusObj) {
 		
 		if (trackKey == null) {
 			return;
 		}
 		
 		GameSlotMoneyStatus slotStatus = serverIdVsGameSlotCompleteStatus.get(trackKey);
-		slotStatus.setMoneyCreditedStatus(state);
+		
+		slotStatus.setOperationType(statusObj.getOperationType());
+		slotStatus.setOverallStatus(statusObj.getOverallStatus());
+		slotStatus.setUniqueIds(statusObj.getUniqueIds());
+		slotStatus.setDbResultsIds(statusObj.getDbResultsIds());
+		
 		serverIdVsGameSlotCompleteStatus.put(trackKey, slotStatus);
 	}
 	
@@ -73,7 +78,7 @@ public class WinnersMoneyUpdateStatus {
         {
         	String mapKey = it.getKey();
         	GameSlotMoneyStatus status = it.getValue();
-        	if (status.getMoneyCreditedStatus() != WinMoneyCreditStatus.IN_PROGRESS.getId()) {
+        	if (status.getOverallStatus() != WinMoneyCreditStatus.IN_PROGRESS.getId()) {
         		long timeElapsed = System.currentTimeMillis() - status.getSlotGameStartTime();
         		if (timeElapsed >= (10 * 60 * 1000)) {
         			toDelKeys.add(mapKey);
@@ -85,9 +90,9 @@ public class WinnersMoneyUpdateStatus {
         }
 	}
 	
-	public List<SlotGamesWinMoneyStatus> getServerIdStatus(String severId) {
+	public List<GameSlotMoneyStatus> getServerIdStatus(String severId) {
 		
-		List<SlotGamesWinMoneyStatus> winCreditedStatus = new ArrayList<>();
+		List<GameSlotMoneyStatus> winCreditedStatus = new ArrayList<>();
 		
 		Set<Map.Entry<String,GameSlotMoneyStatus>> s = serverIdVsGameSlotCompleteStatus.entrySet();
 		
@@ -95,10 +100,19 @@ public class WinnersMoneyUpdateStatus {
         {
         	String mapKey = it.getKey();
         	GameSlotMoneyStatus status = it.getValue();
-        	if (mapKey.startsWith(severId)) {
-        		SlotGamesWinMoneyStatus statusObj = new SlotGamesWinMoneyStatus();
-        		statusObj.setTrackKey(mapKey);
-        		statusObj.setCreditedStatus(status.getMoneyCreditedStatus());
+        	if (mapKey.startsWith(severId + "-")) {
+        		
+        		GameSlotMoneyStatus statusObj = new GameSlotMoneyStatus();
+        		
+        		statusObj.setTrackKey(status.getTrackKey());
+        		statusObj.setServerId(status.getServerId());
+        		statusObj.setSlotGameStartTime(status.getSlotGameStartTime());
+        		
+        		statusObj.setOperationType(status.getOperationType());
+        		statusObj.setOverallStatus(status.getOverallStatus());
+        		statusObj.setUniqueIds(status.getUniqueIds());
+        		statusObj.setDbResultsIds(status.getDbResultsIds());
+        		
         		winCreditedStatus.add(statusObj);
         	}
         }

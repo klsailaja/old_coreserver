@@ -4,6 +4,7 @@ import java.util.List;
 
 public class UsersCompleteMoneyDetails {
 	private String trackStatusKey;
+	private int operationType; // 0 - Add Money, 1 - Win Money, 2 - Cancel games refund
 	private boolean checkMoney;
 	private List<MoneyTransaction> usersMoneyTransactionList;
 	private int kycDocsStatus;  // 1 means approved
@@ -40,5 +41,12 @@ public class UsersCompleteMoneyDetails {
 	}
 	public void setLogTag(String logTag) {
 		this.logTag = logTag;
+	}
+	
+	public int getOperationType() {
+		return operationType;
+	}
+	public void setOperationType(int operationType) {
+		this.operationType = operationType;
 	}
 }

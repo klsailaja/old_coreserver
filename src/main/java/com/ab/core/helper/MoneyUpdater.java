@@ -17,6 +17,7 @@ import com.ab.core.constants.UserMoneyOperType;
 import com.ab.core.constants.WinMoneyCreditStatus;
 import com.ab.core.db.ConnectionPool;
 import com.ab.core.db.UserMoneyDBHandler;
+import com.ab.core.pojo.GameSlotMoneyStatus;
 import com.ab.core.pojo.MoneyTransaction;
 import com.ab.core.pojo.MyTransaction;
 import com.ab.core.pojo.UserMoney;
@@ -52,9 +53,14 @@ public class MoneyUpdater {
 		loadUserIds.clear();
 	}
 	
-	public synchronized List<Integer> performTransactions(UsersCompleteMoneyDetails usersMoneyDetails) throws SQLException {
+	public synchronized GameSlotMoneyStatus performTransactions(UsersCompleteMoneyDetails usersMoneyDetails) 
+			throws SQLException {
 		
 		long startTime = System.currentTimeMillis();
+		
+		GameSlotMoneyStatus response = new GameSlotMoneyStatus();
+		response.setTrackKey(usersMoneyDetails.getTrackStatusKey());
+		response.setOperationType(usersMoneyDetails.getOperationType());
 		
 		Map<Long, Long> userIdVsWinMoney = new HashMap<>();
 		Map<Long, Long> userIdVsReferMoney = new HashMap<>();
@@ -115,7 +121,7 @@ public class MoneyUpdater {
 			}
 		}
 		
-		List<Integer> moneyUpdateResults = bulkUpdate();
+		List<Integer> moneyUpdateResults = bulkUpdate(response);
 		
 		logger.info("userIdVsWinMoney : {}", userIdVsWinMoney);
 		logger.info("userIdVsReferMoney : {}", userIdVsReferMoney);
@@ -144,16 +150,18 @@ public class MoneyUpdater {
 		} else if ((successOperationsSize + failedOperationsSize) == totalWinTransactionsSize) {
 			moneyCreditState = WinMoneyCreditStatus.PARTIAL_RESULTS.getId();
 		}
+		response.setOverallStatus(moneyCreditState);
+		response.setDbResultsIds(moneyUpdateResults);
 		
 		WinnersMoneyUpdateStatus.getInstance().setStatusToComplete(usersMoneyDetails.getTrackStatusKey(), 
-				moneyCreditState);
+				response);
 		
 		logger.info("Total Time in MoneyUpdater performTransactions {}", (System.currentTimeMillis() - startTime));
 		
-		return moneyUpdateResults;
+		return response;
 	}
 	
-	private List<Integer> bulkUpdate() throws SQLException {
+	private List<Integer> bulkUpdate(GameSlotMoneyStatus mResponse) throws SQLException {
 		
 		ConnectionPool cp = null;
 		Connection dbConn = null;
@@ -169,6 +177,7 @@ public class MoneyUpdater {
 			
 			List<Integer> resultsList = new ArrayList<>();
 			List<MoneyTransaction> allTransactions = new ArrayList<>();
+			List<Integer> requestIds = new ArrayList<>();
 			
 			for (Long userId : loadUserIds) {
 				List<MoneyTransaction> perUserTransactions = userIdVsCurrentTransactions.get(userId);
@@ -179,6 +188,9 @@ public class MoneyUpdater {
 				allTransactions.addAll(perUserTransactions);
 				
 				for (MoneyTransaction moneyTransaction : perUserTransactions) {
+					
+					requestIds.add(moneyTransaction.getUniqueId());
+					
 					++index;
 					long amount = moneyTransaction.getAmount();
 					if (moneyTransaction.getOperType() == UserMoneyOperType.SUBTRACT) {

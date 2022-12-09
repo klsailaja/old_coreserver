@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import com.ab.core.constants.QuizConstants;
 import com.ab.core.handlers.PaymentProgressCheck;
 import com.ab.core.helper.MoneyUpdater;
+import com.ab.core.pojo.GameSlotMoneyStatus;
 import com.ab.core.pojo.MoneyTransaction;
 import com.ab.core.pojo.UsersCompleteMoneyDetails;
 
@@ -26,13 +27,16 @@ public class UserMoneyUpdateProcessorTask implements Runnable {
 	public void run() {
 		try {
 			List<MoneyTransaction> transactionsList = usersCompleteDetails.getUsersMoneyTransactionList();
+			
 			List<Long> paymentInProgressUidList = new ArrayList<>();
 			for (MoneyTransaction trans : transactionsList) {
 				paymentInProgressUidList.add(trans.getUserProfileId());
 			}
 			PaymentProgressCheck.getInstance().loadUserIds(paymentInProgressUidList);
 			
-			results = MoneyUpdater.getInstance().performTransactions(usersCompleteDetails);
+			GameSlotMoneyStatus response 
+				= MoneyUpdater.getInstance().performTransactions(usersCompleteDetails);
+			results = response.getDbResultsIds();
 			
 			PaymentProgressCheck.getInstance().clearAll();
 			
