@@ -1,16 +1,16 @@
 package com.ab.core.constants;
 
-public enum WinMoneyCreditStatus {
+public enum MoneyCreditStatus {
 	IN_PROGRESS (0), ALL_SUCCESS(1), ALL_FAIL(2), PARTIAL_RESULTS(3);
 	
 	private final int id;
 	
-	private WinMoneyCreditStatus(int id){
+	private MoneyCreditStatus(int id){
 		this.id = id;
 	}
 	
-	public static WinMoneyCreditStatus findById(int id){
-		for(WinMoneyCreditStatus type : WinMoneyCreditStatus.values()){
+	public static MoneyCreditStatus findById(int id){
+		for(MoneyCreditStatus type : MoneyCreditStatus.values()){
 			if(type.id == id) return type;
 		}
 		return null;
@@ -20,3 +20,4 @@ public enum WinMoneyCreditStatus {
 		return id;
 	}
 }
+

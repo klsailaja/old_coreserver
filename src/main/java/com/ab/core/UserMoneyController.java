@@ -94,7 +94,7 @@ public class UserMoneyController extends BaseController {
 	}
 	
 	@RequestMapping(value = "/money/update/{serverId}", method = RequestMethod.GET, produces = "application/json")
-	public @ResponseBody List<GameSlotMoneyStatus> getGamesSlotMoneyStatus(@PathVariable("serverId") String serverId) 
+	public @ResponseBody List<GameSlotMoneyStatus> getGamesSlotMoneyStatus(@PathVariable("serverId") Integer serverId) 
 			throws InternalException {
 		return WinnersMoneyUpdateStatus.getInstance().getServerIdStatus(serverId);
 	}

@@ -12,9 +12,9 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ab.core.constants.MoneyCreditStatus;
 import com.ab.core.constants.UserMoneyAccountType;
 import com.ab.core.constants.UserMoneyOperType;
-import com.ab.core.constants.WinMoneyCreditStatus;
 import com.ab.core.db.ConnectionPool;
 import com.ab.core.db.UserMoneyDBHandler;
 import com.ab.core.pojo.GameSlotMoneyStatus;
@@ -59,7 +59,8 @@ public class MoneyUpdater {
 		long startTime = System.currentTimeMillis();
 		
 		GameSlotMoneyStatus response = new GameSlotMoneyStatus();
-		response.setTrackKey(usersMoneyDetails.getTrackStatusKey());
+		response.setServerId(usersMoneyDetails.getServerId());
+		response.setRequestId(usersMoneyDetails.getRequestId());
 		response.setOperationType(usersMoneyDetails.getOperationType());
 		
 		Map<Long, Long> userIdVsWinMoney = new HashMap<>();
@@ -142,19 +143,20 @@ public class MoneyUpdater {
 		
 		clearStates();
 		
-		int moneyCreditState = WinMoneyCreditStatus.IN_PROGRESS.getId();
+		int moneyCreditState = MoneyCreditStatus.IN_PROGRESS.getId();
 		if (successOperationsSize == totalWinTransactionsSize) {
-			moneyCreditState = WinMoneyCreditStatus.ALL_SUCCESS.getId();
+			moneyCreditState = MoneyCreditStatus.ALL_SUCCESS.getId();
 		} else if (failedOperationsSize == totalWinTransactionsSize) {
-			moneyCreditState = WinMoneyCreditStatus.ALL_FAIL.getId();
+			moneyCreditState = MoneyCreditStatus.ALL_FAIL.getId();
 		} else if ((successOperationsSize + failedOperationsSize) == totalWinTransactionsSize) {
-			moneyCreditState = WinMoneyCreditStatus.PARTIAL_RESULTS.getId();
+			moneyCreditState = MoneyCreditStatus.PARTIAL_RESULTS.getId();
 		}
-		response.setOverallStatus(moneyCreditState);
+		response.setMoneyCreditedStatus(moneyCreditState);
 		response.setDbResultsIds(moneyUpdateResults);
 		
-		WinnersMoneyUpdateStatus.getInstance().setStatusToComplete(usersMoneyDetails.getTrackStatusKey(), 
-				response);
+		WinnersMoneyUpdateStatus.getInstance().setStatusToComplete(response.getRequestId(), response.getServerId(),
+				response.getUniqueIds(), response.getDbResultsIds(), response.getMoneyCreditedStatus());
+				
 		
 		logger.info("Total Time in MoneyUpdater performTransactions {}", (System.currentTimeMillis() - startTime));
 		

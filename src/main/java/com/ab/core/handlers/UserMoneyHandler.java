@@ -50,11 +50,9 @@ public class UserMoneyHandler {
 	public synchronized List<Integer> performUserMoneyOperation(UsersCompleteMoneyDetails usersMoneyDetails) 
 			throws NotAllowedException, SQLException {
 		
-		String trackKey = usersMoneyDetails.getTrackStatusKey();
-		logger.info("This is in performUserMoneyOperation with trackKey: {} , money transactions size {}",
-				trackKey, usersMoneyDetails.getUsersMoneyTransactionList().size());
-		logger.info("{} in performUserMoneyOperation with trackKey: {}", usersMoneyDetails.getLogTag(), trackKey);
-		
+		logger.info("{} This is in performUserMoneyOperation with serverId: {} and request id: {} , money transactions size {}",
+				usersMoneyDetails.getLogTag(), usersMoneyDetails.getServerId(), usersMoneyDetails.getRequestId(), 
+				usersMoneyDetails.getUsersMoneyTransactionList().size());
 		
 		boolean checkMoney = usersMoneyDetails.isCheckMoney();
 		
@@ -83,11 +81,11 @@ public class UserMoneyHandler {
 		
 		UserMoneyUpdateProcessorTask moneyProcessorTask = new UserMoneyUpdateProcessorTask(usersMoneyDetails);
 		
-		if (trackKey == null) {
+		if (usersMoneyDetails.getRequestId() == 0) {
 			moneyProcessorTask.run();
 			return moneyProcessorTask.getMoneyUpdateResults();
 		} else {
-			WinnersMoneyUpdateStatus.getInstance().createEntry(usersMoneyDetails.getTrackStatusKey());
+			WinnersMoneyUpdateStatus.getInstance().createEntry(usersMoneyDetails);
 		}
 		
 		SingleThreadMoneyUpdater.getInstance().submit(moneyProcessorTask);

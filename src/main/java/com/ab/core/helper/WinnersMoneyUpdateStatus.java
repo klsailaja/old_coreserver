@@ -1,24 +1,22 @@
 package com.ab.core.helper;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.ab.core.constants.WinMoneyCreditStatus;
+import com.ab.core.constants.MoneyCreditStatus;
 import com.ab.core.pojo.GameSlotMoneyStatus;
+import com.ab.core.pojo.UsersCompleteMoneyDetails;
 
 public class WinnersMoneyUpdateStatus {
 	private static WinnersMoneyUpdateStatus instance = null;
 	
 	private static final Logger logger = LogManager.getLogger(WinnersMoneyUpdateStatus.class);
 	
-	private Map<String,GameSlotMoneyStatus> serverIdVsGameSlotCompleteStatus = new HashMap<>();
+	private List<GameSlotMoneyStatus> gameSlotMoneyStatusList = new ArrayList<>();
 	
 	private WinnersMoneyUpdateStatus() {
 		
@@ -33,89 +31,66 @@ public class WinnersMoneyUpdateStatus {
 	}
 	
 	
-	public void createEntry(String trackKey) {
-		
-		if (trackKey == null) {
-			return;
-		}
+	public synchronized void createEntry(UsersCompleteMoneyDetails usersCompleteDetailsObj) {
 		
 		GameSlotMoneyStatus slotStatus = new GameSlotMoneyStatus();
 		
-		StringTokenizer strTokenizer = new StringTokenizer(trackKey, "-");
-		String serverIdKey = strTokenizer.nextToken();
-		long slotStartTime = Long.parseLong(strTokenizer.nextToken());
+		slotStatus.setServerId(usersCompleteDetailsObj.getServerId());
+		slotStatus.setRequestId(usersCompleteDetailsObj.getRequestId());
+		slotStatus.setOperationType(usersCompleteDetailsObj.getOperationType());
 		
-		slotStatus.setTrackKey(trackKey);
-		slotStatus.setServerId(serverIdKey);
-		slotStatus.setOverallStatus(WinMoneyCreditStatus.IN_PROGRESS.getId()); 
-		slotStatus.setSlotGameStartTime(slotStartTime);
+		slotStatus.setMoneyCreditedStatus(MoneyCreditStatus.IN_PROGRESS.getId());
 		
-		serverIdVsGameSlotCompleteStatus.put(trackKey, slotStatus);
+		gameSlotMoneyStatusList.add(slotStatus);
 	}
 	
-	public synchronized void setStatusToComplete(String trackKey, GameSlotMoneyStatus statusObj) {
-		
-		if (trackKey == null) {
-			return;
+	public synchronized void setStatusToComplete(int requestId, int serverId, List<Integer> uniqueIds,
+			List<Integer> dbResultIds, int overallStatus) {
+		for (GameSlotMoneyStatus obj : gameSlotMoneyStatusList) {
+			if (obj.getServerId() == serverId) {
+				if (obj.getRequestId() == requestId) {
+					obj.setMoneyCreditedStatus(overallStatus);
+					obj.setUniqueIds(uniqueIds);
+					obj.setDbResultsIds(dbResultIds);
+					obj.setCompletedTime(System.currentTimeMillis());
+				}
+			}
 		}
-		
-		GameSlotMoneyStatus slotStatus = serverIdVsGameSlotCompleteStatus.get(trackKey);
-		
-		slotStatus.setOperationType(statusObj.getOperationType());
-		slotStatus.setOverallStatus(statusObj.getOverallStatus());
-		slotStatus.setUniqueIds(statusObj.getUniqueIds());
-		slotStatus.setDbResultsIds(statusObj.getDbResultsIds());
-		
-		serverIdVsGameSlotCompleteStatus.put(trackKey, slotStatus);
 	}
 	
 	public synchronized void cleanupOldEntries() {
-		Set<Map.Entry<String,GameSlotMoneyStatus>> s = serverIdVsGameSlotCompleteStatus.entrySet();
-		
-		List<String> toDelKeys = new ArrayList<>();
-        
-        for (Map.Entry<String, GameSlotMoneyStatus> it: s)
-        {
-        	String mapKey = it.getKey();
-        	GameSlotMoneyStatus status = it.getValue();
-        	if (status.getOverallStatus() != WinMoneyCreditStatus.IN_PROGRESS.getId()) {
-        		long timeElapsed = System.currentTimeMillis() - status.getSlotGameStartTime();
-        		if (timeElapsed >= (10 * 60 * 1000)) {
-        			toDelKeys.add(mapKey);
-        		}
-        	}
-        }
-        for (String delKey : toDelKeys) {
-        	serverIdVsGameSlotCompleteStatus.remove(delKey);
-        }
+		Iterator<GameSlotMoneyStatus> iterator = gameSlotMoneyStatusList.iterator();
+		while (iterator.hasNext()) {
+			GameSlotMoneyStatus object = iterator.next();
+			if (object.getCompletedTime() != 0) {
+				long currentTime = System.currentTimeMillis();
+				if ((currentTime - object.getCompletedTime()) >= 10 * 60 * 1000) {
+					iterator.remove();
+				}
+			}
+		}
 	}
 	
-	public List<GameSlotMoneyStatus> getServerIdStatus(String severId) {
+	public List<GameSlotMoneyStatus> getServerIdStatus(int severId) {
 		
-		List<GameSlotMoneyStatus> winCreditedStatus = new ArrayList<>();
+		List<GameSlotMoneyStatus> serverSpecificMoneyStatusList = new ArrayList<>();
 		
-		Set<Map.Entry<String,GameSlotMoneyStatus>> s = serverIdVsGameSlotCompleteStatus.entrySet();
+		for (GameSlotMoneyStatus obj : gameSlotMoneyStatusList) {
+			if (obj.getServerId() == severId) {
+				GameSlotMoneyStatus statusObj = new GameSlotMoneyStatus();
+				
+				statusObj.setRequestId(obj.getRequestId());
+				statusObj.setServerId(obj.getServerId());
+				statusObj.setOperationType(obj.getOperationType());
+				statusObj.setMoneyCreditedStatus(obj.getMoneyCreditedStatus());
+				statusObj.setUniqueIds(obj.getUniqueIds());
+				statusObj.setDbResultsIds(obj.getDbResultsIds());
+				statusObj.setCompletedTime(obj.getCompletedTime());
+				
+				serverSpecificMoneyStatusList.add(statusObj);
+			}
+		}
 		
-		for (Map.Entry<String, GameSlotMoneyStatus> it: s)
-        {
-        	String mapKey = it.getKey();
-        	GameSlotMoneyStatus status = it.getValue();
-        	if (mapKey.startsWith(severId + "-")) {
-        		
-        		GameSlotMoneyStatus statusObj = new GameSlotMoneyStatus();
-        		
-        		statusObj.setTrackKey(status.getTrackKey());
-        		statusObj.setServerId(status.getServerId());
-        		statusObj.setSlotGameStartTime(status.getSlotGameStartTime());
-        		
-        		statusObj.setOperationType(status.getOperationType());
-        		statusObj.setOverallStatus(status.getOverallStatus());
-        		statusObj.setUniqueIds(status.getUniqueIds());
-        		statusObj.setDbResultsIds(status.getDbResultsIds());
-        		
-        		winCreditedStatus.add(statusObj);
-        	}
-        }
-		return winCreditedStatus;
+		return serverSpecificMoneyStatusList;
 	}
 }

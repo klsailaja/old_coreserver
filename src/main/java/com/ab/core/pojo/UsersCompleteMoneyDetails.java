@@ -3,12 +3,26 @@ package com.ab.core.pojo;
 import java.util.List;
 
 public class UsersCompleteMoneyDetails {
-	private String trackStatusKey;
+	private int requestId;
+	private int serverId;
 	private int operationType; // 0 - Add Money, 1 - Win Money, 2 - Cancel games refund
 	private boolean checkMoney;
 	private List<MoneyTransaction> usersMoneyTransactionList;
 	private int kycDocsStatus;  // 1 means approved
 	private String logTag;
+	
+	public int getRequestId() {
+		return requestId;
+	}
+	public void setRequestId(int requestId) {
+		this.requestId = requestId;
+	}
+	public int getServerId() {
+		return serverId;
+	}
+	public void setServerId(int serverId) {
+		this.serverId = serverId;
+	}
 	
 	public boolean isCheckMoney() {
 		return checkMoney;
@@ -29,13 +43,6 @@ public class UsersCompleteMoneyDetails {
 	public void setkycDocsStatus(int kycDocsStatus) {
 		this.kycDocsStatus = kycDocsStatus;
 	}
-	public String getTrackStatusKey() {
-		return trackStatusKey;
-	}
-	public void setTrackStatusKey(String trackStatusKey) {
-		this.trackStatusKey = trackStatusKey;
-	}
-	
 	public String getLogTag() {
 		return logTag;
 	}

@@ -3,19 +3,32 @@ package com.ab.core.pojo;
 import java.util.List;
 
 public class GameSlotMoneyStatus {
-	private String trackKey;
-	private String serverId;
-	private long slotGameStartTime;
-	
+	private int requestId;
+	private int serverId;
 	private int operationType;
-	private int overallStatus;
-	private List<Integer> transactionsIdSet;
-	private List<Integer> dbResultsIds;
+	private List<Integer> uniqueIds;
 	
-	public String getServerId() {
+	private int moneyCreditedStatus;
+	private List<Integer> dbResultsIds;
+	private long completedTime;
+	
+	public long getCompletedTime() {
+		return completedTime;
+	}
+	public void setCompletedTime(long completedTime) {
+		this.completedTime = completedTime;
+	}
+	
+	public int getRequestId() {
+		return requestId;
+	}
+	public void setRequestId(int requestId) {
+		this.requestId = requestId;
+	}
+	public int getServerId() {
 		return serverId;
 	}
-	public void setServerId(String serverId) {
+	public void setServerId(int serverId) {
 		this.serverId = serverId;
 	}
 	public int getOperationType() {
@@ -24,38 +37,22 @@ public class GameSlotMoneyStatus {
 	public void setOperationType(int operationType) {
 		this.operationType = operationType;
 	}
-	
-	
-	public String getTrackKey() {
-		return trackKey;
+	public int getMoneyCreditedStatus() {
+		return moneyCreditedStatus;
 	}
-	public void setTrackKey(String trackKey) {
-		this.trackKey = trackKey;
-	}
-	public long getSlotGameStartTime() {
-		return slotGameStartTime;
-	}
-	public void setSlotGameStartTime(long slotGameStartTime) {
-		this.slotGameStartTime = slotGameStartTime;
-	}
-	public int getOverallStatus() {
-		return overallStatus;
-	}
-	public void setOverallStatus(int overallStatus) {
-		this.overallStatus = overallStatus;
-	}
-	
-	public void setUniqueIds(List<Integer> uniqueIds) {
-		this.transactionsIdSet = uniqueIds;
+	public void setMoneyCreditedStatus(int moneyCreditedStatus) {
+		this.moneyCreditedStatus = moneyCreditedStatus;
 	}
 	public List<Integer> getUniqueIds() {
-		return transactionsIdSet;
+		return uniqueIds;
 	}
-	
-	public void setDbResultsIds(List<Integer> dbResultsIds) {
-		this.dbResultsIds = dbResultsIds;
+	public void setUniqueIds(List<Integer> uniqueIds) {
+		this.uniqueIds = uniqueIds;
 	}
 	public List<Integer> getDbResultsIds() {
 		return dbResultsIds;
+	}
+	public void setDbResultsIds(List<Integer> dbResultsIds) {
+		this.dbResultsIds = dbResultsIds;
 	}
 }
