@@ -2,6 +2,7 @@ package com.ab.core;
 
 import java.sql.SQLException;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
@@ -34,12 +35,15 @@ public class CoreQuizServerApplication implements ApplicationRunner {
 	public void run(ApplicationArguments args) {
 		
 		logger.info("This is in CoreQuizServerApplication");
+		QuizConstants.initializeProps();
 		
 		try {
 			ConnectionPool.getInstance();
 		} catch (SQLException e) {
-			logger.error("************************");
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("SQLException while initilizing ConnectionPool", e);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
+			System.exit(0);
 		}
 		
 		
@@ -52,6 +56,7 @@ public class CoreQuizServerApplication implements ApplicationRunner {
 		
 		long initialDelay = calendar.getTimeInMillis() - System.currentTimeMillis();
 		//initialDelay = 0;
+		logger.info("Purge old records task scheduled at {}", new Date(calendar.getTimeInMillis()));
 		
 		LazyScheduler.getInstance().submitRepeatedTask(new DeleteOldRecords(), initialDelay, 
 				24 * 60 * 1000, TimeUnit.MILLISECONDS);
