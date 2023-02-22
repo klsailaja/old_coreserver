@@ -3,7 +3,16 @@ package com.ab.core;
 public class ServerDetails {
 	private String ipAddress;
 	private int port;
+	private long serverIndex;
 	
+	public long getServerIndex() {
+		return serverIndex;
+	}
+
+	public void setServerIndex(long serverIndex) {
+		this.serverIndex = serverIndex;
+	}
+
 	public String getIpAddress() {
 		return ipAddress;
 	}

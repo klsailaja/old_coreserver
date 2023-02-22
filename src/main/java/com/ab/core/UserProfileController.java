@@ -91,6 +91,7 @@ public class UserProfileController extends BaseController {
 				serverIp = serverDetails.getIpAddress();
 			}
 			dbUserProfile.setServerIpAddress(serverIp);
+			dbUserProfile.setServerIndex(serverDetails.getServerIndex());
 			
 			return dbUserProfile;
 		} catch (SQLException ex) {
@@ -234,6 +235,7 @@ public class UserProfileController extends BaseController {
 			}
 			
 			loginResult.setServerIpAddress(serverIp);
+			loginResult.setServerIndex(serverDetails.getServerIndex());
 			return loginResult;
 		} catch(SQLException ex) {
 			logger.error(QuizConstants.ERROR_PREFIX_START);
@@ -528,6 +530,7 @@ public class UserProfileController extends BaseController {
 		
 		serverDetails.setIpAddress(ipAddr);
 		serverDetails.setPort(serverPort);
+		serverDetails.setServerIndex(serverIndex);
 		
 		return serverDetails;
 	}
