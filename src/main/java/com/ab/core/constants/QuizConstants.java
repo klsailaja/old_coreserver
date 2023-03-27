@@ -50,6 +50,8 @@ public class QuizConstants {
 	
 	public static String FORGOT_MAIL_CONTENTS;
 	
+	public static final int[] GAMES_RATES_IN_ONE_SLOT_SPECIAL = {0, 25, 50, 75, 100, 150, 25, 50, 75, 100, 150};
+	
 	public static void initializeProps() {
 		try {
 			FileInputStream reader = new FileInputStream(CORE_SERVER_PROP_FILE);

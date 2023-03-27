@@ -1,6 +1,8 @@
 package com.ab.core;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -23,6 +25,7 @@ import com.ab.core.pojo.GameSlotMoneyStatus;
 import com.ab.core.pojo.UserMoney;
 import com.ab.core.pojo.UsersCompleteMoneyDetails;
 import com.ab.core.pojo.WithdrawMoney;
+import com.ab.core.helper.CelebritySpecialHandler;
 
 @RestController
 public class UserMoneyController extends BaseController {
@@ -97,5 +100,104 @@ public class UserMoneyController extends BaseController {
 	public @ResponseBody List<GameSlotMoneyStatus> getGamesSlotMoneyStatus(@PathVariable("serverId") Integer serverId) 
 			throws InternalException {
 		return WinnersMoneyUpdateStatus.getInstance().getServerIdStatus(serverId);
+	}
+	
+	@RequestMapping(value = "/upcoming", method = RequestMethod.GET, produces = "application/json") 
+	public @ResponseBody List<String> getUpcomingCelebrityNames() {
+		
+        Calendar calendar = Calendar.getInstance();
+        
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        
+		int hour1 = hour;
+		int hour2 = hour + 1;
+		
+		List<String> firstSet = CelebritySpecialHandler.getInstance().
+				getUniqueCelebrityNames(hour1, QuizConstants.GAMES_RATES_IN_ONE_SLOT_SPECIAL.length);
+		
+		StringBuilder firstStrBuilder = new StringBuilder(); 
+		for (String li : firstSet) {
+			firstStrBuilder.append(li);
+			firstStrBuilder.append(", ");
+		}
+		String firstStr = firstStrBuilder.toString(); 
+		int lastPos = firstStr.lastIndexOf(",");
+		if (lastPos > -1) {
+			firstStr = firstStr.substring(0, lastPos).trim();
+		}
+		
+		int startHour = calendar.get(Calendar.HOUR);
+		int startTimeAMPM = calendar.get(Calendar.AM_PM);
+		String startMeridianText = "AM";
+		if (startTimeAMPM == Calendar.PM) {
+			startMeridianText = "PM";
+		}
+		
+		calendar.add(Calendar.HOUR_OF_DAY, 1);
+		
+		int endHour = calendar.get(Calendar.HOUR);
+		int endTimeAMPM = calendar.get(Calendar.AM_PM);
+		String endMeridianText = "AM";
+		if (endTimeAMPM == Calendar.PM) {
+			endMeridianText = "PM";
+		}
+		
+		StringBuffer startTimeBuffer = new StringBuffer(firstStr);
+		startTimeBuffer.append(" games coming at: ");
+		startTimeBuffer.append(startHour);
+		startTimeBuffer.append(" ");
+		startTimeBuffer.append(startMeridianText);
+		startTimeBuffer.append(" - ");
+		startTimeBuffer.append(endHour);
+		startTimeBuffer.append(" ");
+		startTimeBuffer.append(endMeridianText);
+		firstStr = startTimeBuffer.toString();
+		
+		List<String> secondSet = CelebritySpecialHandler.getInstance().
+				getUniqueCelebrityNames(hour2, QuizConstants.GAMES_RATES_IN_ONE_SLOT_SPECIAL.length);
+		StringBuilder secondStrBuilder = new StringBuilder(); 
+		for (String li : secondSet) {
+			secondStrBuilder.append(li);
+			secondStrBuilder.append(", ");
+		}
+		String secondStr = secondStrBuilder.toString();
+		
+		lastPos = secondStr.lastIndexOf(",");
+		if (lastPos > -1) {
+			secondStr = secondStr.substring(0, lastPos).trim();
+		}
+		
+		startHour = calendar.get(Calendar.HOUR);
+		startTimeAMPM = calendar.get(Calendar.AM_PM);
+		startMeridianText = "AM";
+		if (startTimeAMPM == Calendar.PM) {
+			startMeridianText = "PM";
+		}
+		
+		calendar.add(Calendar.HOUR_OF_DAY, 1);
+		
+		endHour = calendar.get(Calendar.HOUR);
+		endTimeAMPM = calendar.get(Calendar.AM_PM);
+		endMeridianText = "AM";
+		if (endTimeAMPM == Calendar.PM) {
+			endMeridianText = "PM";
+		}
+		
+		startTimeBuffer = new StringBuffer(secondStr);
+		startTimeBuffer.append(" games coming at: ");
+		startTimeBuffer.append(startHour);
+		startTimeBuffer.append(" ");
+		startTimeBuffer.append(startMeridianText);
+		startTimeBuffer.append(" - ");
+		startTimeBuffer.append(endHour);
+		startTimeBuffer.append(" ");
+		startTimeBuffer.append(endMeridianText);
+		secondStr = startTimeBuffer.toString();
+		
+		List<String> results = new ArrayList<>(2);
+		results.add(firstStr);
+		results.add(secondStr);
+		
+		return results;
 	}
 }
