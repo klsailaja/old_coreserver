@@ -19,7 +19,9 @@ CREATE TABLE USERACCUMULATEDMONEY (ID BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 		USERID BIGINT, 
 		YEARINDEX INT,
 		WINMONEY BIGINT,
-		REFERMONEY BIGINT, 
+		REFERMONEY BIGINT,
+		ADDEDMONEY BIGINT,
+		WITHDRAWNMONEY BIGINT,
 		PRIMARY KEY (ID)) ENGINE = INNODB;
 		
 CREATE INDEX USERACCUMULATEDMONEY_Inx ON USERACCUMULATEDMONEY(USERID);		
@@ -40,6 +42,9 @@ public class UserAccumulatedResultsDBHandler {
 	public static String YEAR_INDEX = "YEARINDEX";
 	public static String WINMONEY = "WINMONEY";
 	public static String REFERMONEY = "REFERMONEY";
+	public static String ADDEDMONEY = "ADDEDMONEY";
+	public static String WITHDRAWNMONEY = "WITHDRAWNMONEY";
+	
 	
 	public static final String UPDATE_WINMONEY_BY_USER_ID = "UPDATE " + TABLE_NAME + " SET "
 			+ WINMONEY + " = " + WINMONEY + " + ? WHERE " + USERID + " = ? AND " + YEAR_INDEX + " = ?";
@@ -47,7 +52,14 @@ public class UserAccumulatedResultsDBHandler {
 	public static final String UPDATE_REFERMONEY_BY_USER_ID = "UPDATE " + TABLE_NAME + " SET "
 			+ REFERMONEY + " = " + REFERMONEY + " + ? WHERE " + USERID + " = ? AND " + YEAR_INDEX + " = ?";
 	
-	public static final String GET_BY_USER_ID = "SELECT " + WINMONEY + "," + REFERMONEY
+	public static final String UPDATE_ADDEDMONEY_BY_USER_ID = "UPDATE " + TABLE_NAME + " SET "
+			+ ADDEDMONEY + " = " + ADDEDMONEY + " + ? WHERE " + USERID + " = ? AND " + YEAR_INDEX + " = ?";
+	
+	public static final String UPDATE_WITHDRAWNMONEY_BY_USER_ID = "UPDATE " + TABLE_NAME + " SET "
+			+ WITHDRAWNMONEY + " = " + WITHDRAWNMONEY + " + ? WHERE " + USERID + " = ? AND " + YEAR_INDEX + " = ?";
+	
+	public static final String GET_BY_USER_ID = "SELECT " + WINMONEY + "," + REFERMONEY + "," 
+			+ ADDEDMONEY + "," + WITHDRAWNMONEY + "," 
 			+ " FROM " + TABLE_NAME + " WHERE " + USERID + " = ? AND " + YEAR_INDEX + " = ?";
 	
 	// create a record
@@ -58,8 +70,9 @@ public class UserAccumulatedResultsDBHandler {
 	
 	private static final String CREATE_MONEY_ENTRY = "INSERT INTO " + TABLE_NAME 
 			+ "(" + USERID + "," + YEAR_INDEX + ","
-			+ WINMONEY + "," + REFERMONEY  
-			+ ") VALUES" + "(?,?,?,?)";
+			+ WINMONEY + "," + REFERMONEY
+			+ ADDEDMONEY + "," + WITHDRAWNMONEY
+			+ ") VALUES" + "(?,?,?,?,?,?)";
 	
 	private UserAccumulatedResultsDBHandler() {
 	}
@@ -101,6 +114,8 @@ public class UserAccumulatedResultsDBHandler {
 			ps.setInt(2, obj.getYearIndex());
 			ps.setLong(3, obj.getWinAmount());
 			ps.setLong(4, obj.getReferAmount());
+			ps.setLong(5, obj.getAddedAmount());
+			ps.setLong(6, obj.getWithdrawnAmount());
 			
 			int result = ps.executeUpdate();
 			logger.info("createEntry with uid {} result is {}", obj.getUid(), (result > 0));
@@ -131,6 +146,8 @@ public class UserAccumulatedResultsDBHandler {
 			obj.setUid(uid);
 			obj.setWinAmount(0);
 			obj.setReferAmount(0);
+			obj.setAddedAmount(0);
+			obj.setWithdrawnAmount(0);
 			obj.setYearIndex(yearIndices[i]);
 			list.add(obj);
 		}
@@ -162,6 +179,8 @@ public class UserAccumulatedResultsDBHandler {
 				ps.setInt(2, obj.getYearIndex());
 				ps.setLong(3, obj.getWinAmount());
 				ps.setLong(4, obj.getReferAmount());
+				ps.setLong(5, obj.getAddedAmount());
+				ps.setLong(6, obj.getWithdrawnAmount());
 			
 				ps.addBatch();
 				index++;
@@ -309,7 +328,7 @@ public class UserAccumulatedResultsDBHandler {
 		
 		int[] yearIndices = getYearIndices(3);
 		
-		long[] results = new long[2];
+		long[] results = new long[4];
 		results[0] = -1;
 		results[1] = -1;
 		
@@ -328,6 +347,8 @@ public class UserAccumulatedResultsDBHandler {
 				if (rs.next()) {
 					results[0] = rs.getLong(WINMONEY);
 					results[1] = rs.getLong(REFERMONEY);
+					results[2] = rs.getLong(ADDEDMONEY);
+					results[3] = rs.getLong(WITHDRAWNMONEY);
 				}
 			}
 		} catch (SQLException ex) {

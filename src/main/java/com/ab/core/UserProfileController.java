@@ -236,6 +236,7 @@ public class UserProfileController extends BaseController {
 			
 			loginResult.setServerIpAddress(serverIp);
 			loginResult.setServerIndex(serverDetails.getServerIndex());
+			loginResult.setMoneyMode(QuizConstants.MONEY_MODE);
 			return loginResult;
 		} catch(SQLException ex) {
 			logger.error(QuizConstants.ERROR_PREFIX_START);

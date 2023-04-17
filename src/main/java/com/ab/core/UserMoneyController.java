@@ -65,19 +65,37 @@ public class UserMoneyController extends BaseController {
 		}
 	}
 	
-	@RequestMapping(value = "/money/update", method = RequestMethod.POST, produces = "application/json")
-	public @ResponseBody List<Integer> loadMoney(@RequestBody UsersCompleteMoneyDetails completeDetails)
+	@RequestMapping(value = "/money/add", method = RequestMethod.POST, produces = "application/json")
+	public @ResponseBody boolean addMoney(@RequestBody UsersCompleteMoneyDetails completeDetails)
 			throws InternalException {
-		logger.info("{} This is in Money Updater with records size", completeDetails.getLogTag(),
+		logger.info("{} This is in addMoney with records size", completeDetails.getLogTag());
+		try {
+			long uid = completeDetails.getUsersMoneyTransactionList().get(0).getUserProfileId();
+			return UserMoneyHandler.getInstance().addMoney(completeDetails);
+		} catch (SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
+			logger.error("{} Exception in addMoney", completeDetails.getLogTag());
+			logger.error("Exception is: ", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
+			throw new InternalException("Server Error in addMoney");
+		}
+				
+	}
+	
+	
+	@RequestMapping(value = "/money/update", method = RequestMethod.POST, produces = "application/json")
+	public @ResponseBody List<Integer> updatePlayedMoney(@RequestBody UsersCompleteMoneyDetails completeDetails)
+			throws InternalException {
+		logger.info("{} {} This is in updatePlayedMoney with records size", completeDetails.getLogTag(),
 				completeDetails.getUsersMoneyTransactionList().size());
 		try {
 			return UserMoneyHandler.getInstance().performUserMoneyOperation(completeDetails);
 		} catch (SQLException ex) {
 			logger.error(QuizConstants.ERROR_PREFIX_START);
-			logger.error("{} Exception in Money Updater", completeDetails.getLogTag());
+			logger.error("{} Exception in updatePlayedMoney", completeDetails.getLogTag());
 			logger.error("Exception is: ", ex);
 			logger.error(QuizConstants.ERROR_PREFIX_END);
-			throw new InternalException("Server Error in loadMoney");
+			throw new InternalException("Server Error in updatePlayedMoney");
 		}
 	}
 	
@@ -101,6 +119,12 @@ public class UserMoneyController extends BaseController {
 			throws InternalException {
 		return WinnersMoneyUpdateStatus.getInstance().getServerIdStatus(serverId);
 	}
+	
+	@RequestMapping(value = "/money/mode", method = RequestMethod.GET, produces = "application/json")
+	public @ResponseBody Integer getMoneyMode() throws InternalException {
+		return QuizConstants.MONEY_MODE_CONFIG;
+	}
+	
 	
 	@RequestMapping(value = "/upcoming", method = RequestMethod.GET, produces = "application/json") 
 	public @ResponseBody List<String> getUpcomingCelebrityNames() {
@@ -127,6 +151,9 @@ public class UserMoneyController extends BaseController {
 		}
 		
 		int startHour = calendar.get(Calendar.HOUR);
+		if (startHour == 0) {
+			startHour = 12;
+		}
 		int startTimeAMPM = calendar.get(Calendar.AM_PM);
 		String startMeridianText = "AM";
 		if (startTimeAMPM == Calendar.PM) {
@@ -136,6 +163,9 @@ public class UserMoneyController extends BaseController {
 		calendar.add(Calendar.HOUR_OF_DAY, 1);
 		
 		int endHour = calendar.get(Calendar.HOUR);
+		if (endHour == 0) {
+			endHour = 12;
+		}
 		int endTimeAMPM = calendar.get(Calendar.AM_PM);
 		String endMeridianText = "AM";
 		if (endTimeAMPM == Calendar.PM) {
@@ -168,6 +198,9 @@ public class UserMoneyController extends BaseController {
 		}
 		
 		startHour = calendar.get(Calendar.HOUR);
+		if (startHour == 0) {
+			startHour = 12;
+		}
 		startTimeAMPM = calendar.get(Calendar.AM_PM);
 		startMeridianText = "AM";
 		if (startTimeAMPM == Calendar.PM) {
@@ -177,6 +210,9 @@ public class UserMoneyController extends BaseController {
 		calendar.add(Calendar.HOUR_OF_DAY, 1);
 		
 		endHour = calendar.get(Calendar.HOUR);
+		if (endHour == 0) {
+			endHour = 12;
+		}
 		endTimeAMPM = calendar.get(Calendar.AM_PM);
 		endMeridianText = "AM";
 		if (endTimeAMPM == Calendar.PM) {

@@ -84,6 +84,7 @@ public class MoneyUpdater {
 			long userCB = userOB;
 			long userWinMoney = 0;
 			long userReferMoney = 0;
+			long userLoadedMoney = 0;
 			
 			for (MoneyTransaction moneyTran : perUserTransactions) {
 				long transactionAmount = moneyTran.getAmount();
@@ -109,6 +110,12 @@ public class MoneyUpdater {
 						userReferMoney = userReferMoney + transactionAmount;
 					} else {
 						userReferMoney = userReferMoney - transactionAmount;
+					}
+				} else if (userAccountType == UserMoneyAccountType.LOADED_MONEY) {
+					if (moneyTran.getOperType() == UserMoneyOperType.ADD) {
+						userLoadedMoney = userLoadedMoney + transactionAmount;
+					} else {
+						userLoadedMoney = userLoadedMoney - transactionAmount;
 					}
 				}
 			}

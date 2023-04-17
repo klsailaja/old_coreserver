@@ -16,6 +16,16 @@ public class UserProfile {
 	private int forgotPasswdUsed;
 	private String serverIpAddress;
 	private long serverIndex;
+	private boolean moneyMode;
+	
+	public boolean isMoneyMode() {
+		return moneyMode;
+	}
+
+	public void setMoneyMode(boolean moneyMode) {
+		this.moneyMode = moneyMode;
+	}
+
 	
 	public long getServerIndex() {
 		return serverIndex;

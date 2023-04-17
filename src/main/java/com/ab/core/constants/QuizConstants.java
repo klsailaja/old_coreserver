@@ -18,6 +18,10 @@ public class QuizConstants {
 	
 	public static long MAX_USERS_COUNT;
 	
+	public static boolean MONEY_MODE;
+	
+	public static Integer MONEY_MODE_CONFIG = -1;
+	
 	public static int SPECIAL_CODE_MAX_COUNT;
 	
 	public static int CURRENT_SERVERS_COUNT;
@@ -87,6 +91,10 @@ public class QuizConstants {
 			
 			value = props.getProperty("MAINTENANCE_MODE", "0");
 			MAINTENANCE_MODE = value.equals("1")? true: false;
+			
+			value = props.getProperty("MONEY_MODE", "0");
+			MONEY_MODE_CONFIG = Integer.parseInt(value); 
+			MONEY_MODE = value.equals("1")? true: false; 
 			
 			FROM_MAIL_ID = props.getProperty("FROM_MAIL_ID", "satyahasini25@gmail.com");
 			VERIFY_MAIL_ID_SUBJECT = props.getProperty("VERIFY_MAIL_ID_SUBJECT", "4-digit Verification Code");

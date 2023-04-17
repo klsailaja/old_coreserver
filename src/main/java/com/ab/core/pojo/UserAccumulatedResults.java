@@ -6,6 +6,8 @@ public class UserAccumulatedResults {
 	private int yearIndex;
 	private long winAmount;
 	private long referAmount;
+	private long addedAmount;
+	private long withdrawnAmount;
 	
 	public long getId() {
 		return id;
@@ -36,5 +38,17 @@ public class UserAccumulatedResults {
 	}
 	public void setReferAmount(long referAmount) {
 		this.referAmount = referAmount;
+	}
+	public long getAddedAmount() {
+		return addedAmount;
+	}
+	public void setAddedAmount(long addedAmount) {
+		this.addedAmount = addedAmount;
+	}
+	public long getWithdrawnAmount() {
+		return withdrawnAmount;
+	}
+	public void setWithdrawnAmount(long withdrawnAmount) {
+		this.withdrawnAmount = withdrawnAmount;
 	}
 }

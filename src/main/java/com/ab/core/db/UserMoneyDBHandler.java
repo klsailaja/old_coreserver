@@ -296,6 +296,27 @@ public class UserMoneyDBHandler {
 		return transactionList;
 	}
 	
+	public int updateBalanceFromAddMoney(long amount, long uid) throws SQLException {
+		ConnectionPool cp = null;
+		Connection dbConn = null;
+		
+		PreparedStatement ps = null;
+		
+		try {
+			cp = ConnectionPool.getInstance();
+			dbConn = cp.getDBConnection();
+			
+			ps = dbConn.prepareStatement(UserMoneyDBHandler.UPDATE_BALANCE_AMOUNT_BY_USER_ID);
+			
+			ps.setLong(1,  amount);
+			ps.setLong(2, uid);
+			int createResult = ps.executeUpdate();
+			
+			dbConn.commit();
+		}
+		
+	}
+	
 	/*private String getAccountName(int accType) {
 		switch (accType) {
 			case 1 : {

@@ -11,6 +11,8 @@ import org.apache.logging.log4j.Logger;
 
 import com.ab.core.common.LazyScheduler;
 import com.ab.core.constants.QuizConstants;
+import com.ab.core.constants.UserMoneyAccountType;
+import com.ab.core.constants.UserMoneyOperType;
 import com.ab.core.constants.WithdrawReqState;
 import com.ab.core.db.ConnectionPool;
 import com.ab.core.db.UserAccumulatedResultsDBHandler;
@@ -72,7 +74,16 @@ public class UserMoneyHandler {
 			long[] userAccumulatedResults = UserAccumulatedResultsDBHandler.getInstance().getAccumulatedResults(userId);
 			userMoney.setWinAmount(userAccumulatedResults[0]);
 			userMoney.setReferAmount(userAccumulatedResults[1]);
-			if (userMoney.getWinAmount() > 50000) {
+			userMoney.setAddedAmount(userAccumulatedResults[2]);
+			userMoney.setWithdrawnAmount(userAccumulatedResults[3]);
+			
+			long profit = userMoney.getAddedAmount() - (userMoney.getWinAmount() + userMoney.getReferAmount());
+			if (!QuizConstants.MONEY_MODE) {
+				long profitCoins = profit;
+				profit = (profitCoins * 10)/100;
+			}
+			
+			if (profit > 50000) {
 				if (usersMoneyDetails.getkycDocsStatus() == 0) {
 					throw new NotAllowedException("Not allowed to play. Please complete the KYC Docs Upload process");
 				}
@@ -160,5 +171,39 @@ public class UserMoneyHandler {
 			}
 		}
 		return true;
+	}
+
+	public boolean addMoney(UsersCompleteMoneyDetails completeDetails) {
+		List<MoneyTransaction> transactionsList = completeDetails.getUsersMoneyTransactionList();
+		UserMoney userMoneyObject = UserMoneyDBHandler.getInstance().getUserMoneyById(completeDetails.getUsersMoneyTransactionList().get(0).getUserProfileId());
+		long userOB = userMoneyObject.getAmount();
+		long userBalance = userOB;
+		long userCB = userOB;
+		long userWinMoney = 0;
+		long userReferMoney = 0;
+		long userLoadedMoney = 0;
+		
+		for (MoneyTransaction moneyTran : transactionsList) {
+			long transactionAmount = moneyTran.getAmount();
+			UserMoneyAccountType userAccountType = moneyTran.getAccountType();
+			if (moneyTran.getOperType() == UserMoneyOperType.ADD) {
+				userBalance = userBalance + transactionAmount;
+			} else {
+				userBalance = userBalance - transactionAmount;
+			}
+			userCB = userBalance;
+			moneyTran.getTransaction().setOpeningBalance(userOB);
+			moneyTran.getTransaction().setClosingBalance(userCB);
+			userOB = userCB;
+
+			if (userAccountType == UserMoneyAccountType.LOADED_MONEY) {
+				if (moneyTran.getOperType() == UserMoneyOperType.ADD) {
+					userLoadedMoney = userLoadedMoney + transactionAmount;
+				} else {
+					userLoadedMoney = userLoadedMoney - transactionAmount;
+				}
+			}
+		}
+		return false;
 	}
 }

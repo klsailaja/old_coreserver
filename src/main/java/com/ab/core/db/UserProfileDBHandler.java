@@ -246,12 +246,18 @@ public class UserProfileDBHandler {
 					}
 					
 					UserMoney userMoneyObject = new UserMoney(userProfileId, initialLoadedMoney, 0, 0, 0);
+					userMoneyObject.setAddedAmount(0);
+					userMoneyObject.setWithdrawnAmount(0);
+					
+					
 					UserMoneyDBHandler.getInstance().createUserMoney(userMoneyObject);
 					
 					UserAccumulatedResults obj = new UserAccumulatedResults();
 					obj.setUid(userProfileId);
 					obj.setWinAmount(0);
 					obj.setReferAmount(0);
+					obj.setAddedAmount(0);
+					obj.setWithdrawnAmount(0);
 					UserAccumulatedResultsDBHandler.getInstance().createInitialEntries(obj, 3);
 
 					
