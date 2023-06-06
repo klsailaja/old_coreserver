@@ -59,7 +59,7 @@ public class UserAccumulatedResultsDBHandler {
 			+ WITHDRAWNMONEY + " = " + WITHDRAWNMONEY + " + ? WHERE " + USERID + " = ? AND " + YEAR_INDEX + " = ?";
 	
 	public static final String GET_BY_USER_ID = "SELECT " + WINMONEY + "," + REFERMONEY + "," 
-			+ ADDEDMONEY + "," + WITHDRAWNMONEY + "," 
+			+ ADDEDMONEY + "," + WITHDRAWNMONEY 
 			+ " FROM " + TABLE_NAME + " WHERE " + USERID + " = ? AND " + YEAR_INDEX + " = ?";
 	
 	// create a record
@@ -70,7 +70,7 @@ public class UserAccumulatedResultsDBHandler {
 	
 	private static final String CREATE_MONEY_ENTRY = "INSERT INTO " + TABLE_NAME 
 			+ "(" + USERID + "," + YEAR_INDEX + ","
-			+ WINMONEY + "," + REFERMONEY
+			+ WINMONEY + "," + REFERMONEY + ","
 			+ ADDEDMONEY + "," + WITHDRAWNMONEY
 			+ ") VALUES" + "(?,?,?,?,?,?)";
 	
@@ -243,6 +243,50 @@ public class UserAccumulatedResultsDBHandler {
         	yearIndices[index] = yearIndex++;
         }
         return yearIndices;
+	}
+	
+	public void updateAddedMoneyOrWDMoneyQuery(String sqlQryType, String sqlQry, long uid, long amt) throws SQLException {
+		logger.info("This is in updateAddedMoneyOrWDMoneyQuery method");
+		logger.info("Query to execute is uid : {} amt {} and query", uid, amt, sqlQry);
+		
+		int[] yearIndices = getYearIndices(3);
+		
+		ConnectionPool cp = null;
+		Connection dbConn = null;
+		PreparedStatement ps = null;
+		
+		try {
+			cp = ConnectionPool.getInstance();
+			dbConn = cp.getDBConnection();
+			dbConn.setAutoCommit(true);
+			
+			ps = dbConn.prepareStatement(sqlQry);
+			ps.setLong(1, amt);
+			ps.setLong(2, uid);
+			ps.setInt(3, yearIndices[0]);
+			int result = ps.executeUpdate();
+			if (result == 0) {
+				logger.error("******************************");
+				logger.error("The query sql is {}", sqlQry);
+				logger.error("Exception while updating the user accumulated results obj for id {} amt {}", uid, amt);
+				logger.error("******************************");
+				throw new SQLException("Could not update"); 
+			}
+		} catch (SQLException ex) {
+			logger.error("******************************");
+			logger.error("The query sql is {}", sqlQry);
+			logger.error("Exception while updating the user accumulated results obj for id {} amt {}", uid, amt);
+			logger.error("******************************");
+			throw ex;
+		} finally {
+			if (ps != null) {
+				ps.close();
+			}
+			if (dbConn != null) {
+				dbConn.close();
+			}
+		}
+		
 	}
 	
 	public void updateUsersMoneyEntriesInBatch(Map<Long, Long> userIdVsMoney, int batchSize, String sqlQry, String recordType) 

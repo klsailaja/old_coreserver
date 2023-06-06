@@ -296,7 +296,7 @@ public class UserMoneyDBHandler {
 		return transactionList;
 	}
 	
-	public int updateBalanceFromAddMoney(long amount, long uid) throws SQLException {
+	/*public int updateBalanceFromAddMoney(long amount, long uid) throws SQLException {
 		ConnectionPool cp = null;
 		Connection dbConn = null;
 		
@@ -315,7 +315,7 @@ public class UserMoneyDBHandler {
 			dbConn.commit();
 		}
 		
-	}
+	}*/
 	
 	/*private String getAccountName(int accType) {
 		switch (accType) {

@@ -8,7 +8,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.ab.core.constants.QuizConstants;
-import com.ab.core.handlers.PaymentProgressCheck;
 import com.ab.core.helper.MoneyUpdater;
 import com.ab.core.pojo.GameSlotMoneyStatus;
 import com.ab.core.pojo.MoneyTransaction;
@@ -32,18 +31,20 @@ public class UserMoneyUpdateProcessorTask implements Runnable {
 			for (MoneyTransaction trans : transactionsList) {
 				paymentInProgressUidList.add(trans.getUserProfileId());
 			}
-			PaymentProgressCheck.getInstance().loadUserIds(paymentInProgressUidList);
+			//PaymentProgressCheck.getInstance().loadUserIds(paymentInProgressUidList);
 			
 			GameSlotMoneyStatus response 
 				= MoneyUpdater.getInstance().performTransactions(usersCompleteDetails);
 			results = response.getDbResultsIds();
 			
-			PaymentProgressCheck.getInstance().clearAll();
+			//PaymentProgressCheck.getInstance().clearAll();
 			
 		} catch (SQLException e) {
 			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Error executing the UserMoneyUpdateProcessorTask", e);
 			logger.error(QuizConstants.ERROR_PREFIX_END);
+		} catch (Exception ex) {
+			results = null;
 		}
 	}
 	

@@ -8,24 +8,31 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ab.core.common.LazyScheduler;
 import com.ab.core.constants.MoneyCreditStatus;
+import com.ab.core.constants.QuizConstants;
 import com.ab.core.constants.UserMoneyAccountType;
 import com.ab.core.constants.UserMoneyOperType;
+import com.ab.core.constants.WithdrawReqState;
 import com.ab.core.db.ConnectionPool;
+import com.ab.core.db.UserAccumulatedResultsDBHandler;
 import com.ab.core.db.UserMoneyDBHandler;
+import com.ab.core.exceptions.NotAllowedException;
 import com.ab.core.pojo.GameSlotMoneyStatus;
 import com.ab.core.pojo.MoneyTransaction;
 import com.ab.core.pojo.MyTransaction;
 import com.ab.core.pojo.UserMoney;
 import com.ab.core.pojo.UsersCompleteMoneyDetails;
+import com.ab.core.pojo.WithdrawMoney;
 import com.ab.core.tasks.AddTransactionsTask;
 import com.ab.core.tasks.UserAccumulatedUpdateTask;
-
-
 
 public class MoneyUpdater {
 	
@@ -36,6 +43,9 @@ public class MoneyUpdater {
 	private Map<Long, UserMoney> userIdVsUserMoney = new HashMap<>();
 	private Map<Long, List<MoneyTransaction>> userIdVsCurrentTransactions = new HashMap<>();
 	private List<Long> loadUserIds = new ArrayList<>();
+	
+	private ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+	private WriteLock writeLock = lock.writeLock();
 	
 	private MoneyUpdater() {
 	}
@@ -53,121 +63,145 @@ public class MoneyUpdater {
 		loadUserIds.clear();
 	}
 	
-	public synchronized GameSlotMoneyStatus performTransactions(UsersCompleteMoneyDetails usersMoneyDetails) 
-			throws SQLException {
+	public GameSlotMoneyStatus performTransactions(UsersCompleteMoneyDetails usersMoneyDetails) 
+			throws SQLException, Exception {
 		
-		long startTime = System.currentTimeMillis();
+		boolean lockAcquired = false;
+		try {
+			lockAcquired = writeLock.tryLock(20, TimeUnit.SECONDS);  
+		} catch(InterruptedException ex) {
+			lockAcquired = false;
+		}
 		
-		GameSlotMoneyStatus response = new GameSlotMoneyStatus();
-		response.setServerId(usersMoneyDetails.getServerId());
-		response.setRequestId(usersMoneyDetails.getRequestId());
-		response.setOperationType(usersMoneyDetails.getOperationType());
+		if (!lockAcquired) {
+			throw new Exception("Server Busy. Try after 2 minutes");
+		}
 		
-		Map<Long, Long> userIdVsWinMoney = new HashMap<>();
-		Map<Long, Long> userIdVsReferMoney = new HashMap<>();
-
-		fetchUserMoneyObjectsFromDB(usersMoneyDetails);
-		
-		for (Long userId : loadUserIds) {
-			List<MoneyTransaction> perUserTransactions = userIdVsCurrentTransactions.get(userId);
-			if (perUserTransactions.size() == 0) {
-				continue;
-			}
-			UserMoney userMoneyObject = userIdVsUserMoney.get(userId);
-			if (userMoneyObject == null) {
-				logger.info("Ignoring {} user id as user money not found", userId);
-				continue;
-			}
-			
-			long userOB = userMoneyObject.getAmount();
-			long userBalance = userOB;
-			long userCB = userOB;
-			long userWinMoney = 0;
-			long userReferMoney = 0;
-			long userLoadedMoney = 0;
-			
-			for (MoneyTransaction moneyTran : perUserTransactions) {
-				long transactionAmount = moneyTran.getAmount();
-				UserMoneyAccountType userAccountType = moneyTran.getAccountType();
-				if (moneyTran.getOperType() == UserMoneyOperType.ADD) {
-					userBalance = userBalance + transactionAmount;
-				} else {
-					userBalance = userBalance - transactionAmount;
-				}
-				userCB = userBalance;
-				moneyTran.getTransaction().setOpeningBalance(userOB);
-				moneyTran.getTransaction().setClosingBalance(userCB);
-				userOB = userCB;
+		try {
 				
-				if (userAccountType == UserMoneyAccountType.WINNING_MONEY) {
-					if (moneyTran.getOperType() == UserMoneyOperType.ADD) {
-						userWinMoney = userWinMoney + transactionAmount;
-					} else {
-						userWinMoney = userWinMoney - transactionAmount;
-					}
-				} else if (userAccountType == UserMoneyAccountType.REFERAL_MONEY) {
-					if (moneyTran.getOperType() == UserMoneyOperType.ADD) {
-						userReferMoney = userReferMoney + transactionAmount;
-					} else {
-						userReferMoney = userReferMoney - transactionAmount;
-					}
-				} else if (userAccountType == UserMoneyAccountType.LOADED_MONEY) {
-					if (moneyTran.getOperType() == UserMoneyOperType.ADD) {
-						userLoadedMoney = userLoadedMoney + transactionAmount;
-					} else {
-						userLoadedMoney = userLoadedMoney - transactionAmount;
-					}
-				}
-			}
+			long startTime = System.currentTimeMillis();
+			
+			GameSlotMoneyStatus response = new GameSlotMoneyStatus();
+			response.setServerId(usersMoneyDetails.getServerId());
+			response.setRequestId(usersMoneyDetails.getRequestId());
+			response.setOperationType(usersMoneyDetails.getOperationType());
+			
+			Map<Long, Long> userIdVsWinMoney = new HashMap<>();
+			Map<Long, Long> userIdVsReferMoney = new HashMap<>();
 	
-			if (userWinMoney > 0) {
-				userIdVsWinMoney.put(userId, userWinMoney);
+			fetchUserMoneyObjectsFromDB(usersMoneyDetails);
+			
+			for (Long userId : loadUserIds) {
+				List<MoneyTransaction> perUserTransactions = userIdVsCurrentTransactions.get(userId);
+				if (perUserTransactions.size() == 0) {
+					continue;
+				}
+				UserMoney userMoneyObject = userIdVsUserMoney.get(userId);
+				if (userMoneyObject == null) {
+					logger.info("Ignoring {} user id as user money not found", userId);
+					continue;
+				}
+				
+				long userOB = userMoneyObject.getAmount();
+				long userBalance = userOB;
+				long userCB = userOB;
+				long userWinMoney = 0;
+				long userReferMoney = 0;
+				long userLoadedMoney = 0;
+				
+				for (MoneyTransaction moneyTran : perUserTransactions) {
+					long transactionAmount = moneyTran.getAmount();
+					UserMoneyAccountType userAccountType = moneyTran.getAccountType();
+					if (moneyTran.getOperType() == UserMoneyOperType.ADD) {
+						userBalance = userBalance + transactionAmount;
+					} else {
+						userBalance = userBalance - transactionAmount;
+					}
+					userCB = userBalance;
+					moneyTran.getTransaction().setOpeningBalance(userOB);
+					moneyTran.getTransaction().setClosingBalance(userCB);
+					userOB = userCB;
+					
+					if (userAccountType == UserMoneyAccountType.WINNING_MONEY) {
+						if (moneyTran.getOperType() == UserMoneyOperType.ADD) {
+							userWinMoney = userWinMoney + transactionAmount;
+						} else {
+							userWinMoney = userWinMoney - transactionAmount;
+						}
+					} else if (userAccountType == UserMoneyAccountType.REFERAL_MONEY) {
+						if (moneyTran.getOperType() == UserMoneyOperType.ADD) {
+							userReferMoney = userReferMoney + transactionAmount;
+						} else {
+							userReferMoney = userReferMoney - transactionAmount;
+						}
+					} else if (userAccountType == UserMoneyAccountType.LOADED_MONEY) {
+						if (moneyTran.getOperType() == UserMoneyOperType.ADD) {
+							userLoadedMoney = userLoadedMoney + transactionAmount;
+						} 
+						UserAccumulatedResultsDBHandler.getInstance().
+						updateAddedMoneyOrWDMoneyQuery("AddedMoney", 
+								UserAccumulatedResultsDBHandler.UPDATE_ADDEDMONEY_BY_USER_ID, userId, userLoadedMoney);
+					}
+				}
+		
+				if (userWinMoney > 0) {
+					userIdVsWinMoney.put(userId, userWinMoney);
+				}
+				
+				if (userReferMoney > 0) {
+					userIdVsReferMoney.put(userId, userReferMoney);
+				}
 			}
 			
-			if (userReferMoney > 0) {
-				userIdVsReferMoney.put(userId, userReferMoney);
+			List<Integer> moneyUpdateResults = bulkUpdate(response);
+			
+			logger.info("userIdVsWinMoney : {}", userIdVsWinMoney);
+			logger.info("userIdVsReferMoney : {}", userIdVsReferMoney);
+			
+			UserAccumulatedUpdateTask run = new UserAccumulatedUpdateTask(userIdVsWinMoney, userIdVsReferMoney);
+			SingleThreadMoneyUpdater.getInstance().submit(run);
+			
+			int totalWinTransactionsSize = moneyUpdateResults.size();
+			int failedOperationsSize = 0;
+			int successOperationsSize = 0;
+			for (int index : moneyUpdateResults) {
+				if (index > 0) {
+					successOperationsSize++;
+				} else if (index == 0) {
+					failedOperationsSize++;
+				}
 			}
-		}
-		
-		List<Integer> moneyUpdateResults = bulkUpdate(response);
-		
-		logger.info("userIdVsWinMoney : {}", userIdVsWinMoney);
-		logger.info("userIdVsReferMoney : {}", userIdVsReferMoney);
-		
-		UserAccumulatedUpdateTask run = new UserAccumulatedUpdateTask(userIdVsWinMoney, userIdVsReferMoney);
-		SingleThreadMoneyUpdater.getInstance().submit(run);
-		
-		int totalWinTransactionsSize = moneyUpdateResults.size();
-		int failedOperationsSize = 0;
-		int successOperationsSize = 0;
-		for (int index : moneyUpdateResults) {
-			if (index > 0) {
-				successOperationsSize++;
-			} else if (index == 0) {
-				failedOperationsSize++;
+			
+			clearStates();
+			
+			int moneyCreditState = MoneyCreditStatus.IN_PROGRESS.getId();
+			if (successOperationsSize == totalWinTransactionsSize) {
+				moneyCreditState = MoneyCreditStatus.ALL_SUCCESS.getId();
+			} else if (failedOperationsSize == totalWinTransactionsSize) {
+				moneyCreditState = MoneyCreditStatus.ALL_FAIL.getId();
+			} else if ((successOperationsSize + failedOperationsSize) == totalWinTransactionsSize) {
+				moneyCreditState = MoneyCreditStatus.PARTIAL_RESULTS.getId();
 			}
+			response.setMoneyCreditedStatus(moneyCreditState);
+			response.setDbResultsIds(moneyUpdateResults);
+			
+			WinnersMoneyUpdateStatus.getInstance().setStatusToComplete(response.getRequestId(), response.getServerId(),
+					response.getUniqueIds(), response.getDbResultsIds(), response.getMoneyCreditedStatus());
+					
+			
+			logger.info("Total Time in MoneyUpdater performTransactions {}", (System.currentTimeMillis() - startTime));
+			
+			return response;
+		
+		} catch(Exception ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
+			logger.error("Error executing MoneyUpdater performTransactions", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
+			
+		} finally {
+			writeLock.unlock();
 		}
-		
-		clearStates();
-		
-		int moneyCreditState = MoneyCreditStatus.IN_PROGRESS.getId();
-		if (successOperationsSize == totalWinTransactionsSize) {
-			moneyCreditState = MoneyCreditStatus.ALL_SUCCESS.getId();
-		} else if (failedOperationsSize == totalWinTransactionsSize) {
-			moneyCreditState = MoneyCreditStatus.ALL_FAIL.getId();
-		} else if ((successOperationsSize + failedOperationsSize) == totalWinTransactionsSize) {
-			moneyCreditState = MoneyCreditStatus.PARTIAL_RESULTS.getId();
-		}
-		response.setMoneyCreditedStatus(moneyCreditState);
-		response.setDbResultsIds(moneyUpdateResults);
-		
-		WinnersMoneyUpdateStatus.getInstance().setStatusToComplete(response.getRequestId(), response.getServerId(),
-				response.getUniqueIds(), response.getDbResultsIds(), response.getMoneyCreditedStatus());
-				
-		
-		logger.info("Total Time in MoneyUpdater performTransactions {}", (System.currentTimeMillis() - startTime));
-		
-		return response;
+		return null;
 	}
 	
 	private List<Integer> bulkUpdate(GameSlotMoneyStatus mResponse) throws SQLException {
@@ -361,5 +395,95 @@ public class MoneyUpdater {
 		}
 		
 		logger.info("After size {}", userIdVsUserMoney.size());
+	}
+	
+	public boolean performWitdrawOperation(WithdrawMoney wdMoney) throws SQLException, Exception {
+		
+		boolean lockAcquired = false;
+		try {
+			lockAcquired = writeLock.tryLock(20, TimeUnit.SECONDS);  
+		} catch(InterruptedException ex) {
+			lockAcquired = false;
+		}
+		
+		if (!lockAcquired) {
+			throw new Exception("Server Busy. Try after 2 minutes");
+		}
+		
+		String wdSql = UserMoneyDBHandler.WITHDRAW_BALANCE_AMOUNT_BY_USER_ID;
+
+		long userProfileId = wdMoney.getUid();
+		
+		long balance = wdMoney.getWdAmt();
+		long lockBalance = wdMoney.getWdAmt();
+		
+		UserMoney userMoney = getUserMoney(userProfileId);
+		long userOB = userMoney.getAmount();
+		long userCB = userOB; 
+		
+		if (wdMoney.getWdType() == WithdrawReqState.OPEN.getId()) {
+			userCB = userOB - balance;
+			balance = -1 * balance;
+			lockBalance = wdMoney.getWdAmt();
+		} else if (wdMoney.getWdType() == WithdrawReqState.CANCELLED.getId()) {
+			balance = wdMoney.getWdAmt();
+			lockBalance = -1 * lockBalance;
+			userCB = userOB + balance;
+		} else if (wdMoney.getWdType() == WithdrawReqState.CLOSED.getId()) {
+			balance = 0;
+			lockBalance = -1 * lockBalance;
+		}
+		
+		ConnectionPool cp = null;
+		Connection dbConn = null;
+		PreparedStatement ps = null;
+		
+		
+		
+		int withDrawResult = 0;
+		
+		try {
+			cp = ConnectionPool.getInstance();
+			dbConn = cp.getDBConnection();
+			ps = dbConn.prepareStatement(wdSql);
+			
+			ps.setLong(1, balance);
+			ps.setLong(2, lockBalance);
+			ps.setLong(3, userProfileId);
+			
+			int createResult = ps.executeUpdate();
+			if (createResult > 0) {
+				withDrawResult = 1;
+			}
+			logger.debug("WithdrawMoney operation result {}", withDrawResult);
+			wdMoney.getTransaction().setOperResult(withDrawResult);
+			wdMoney.getTransaction().setOpeningBalance(userOB);
+			wdMoney.getTransaction().setClosingBalance(userCB);
+			
+			List<MyTransaction> wdRelatedTransactions = new ArrayList<>();
+			wdRelatedTransactions.add(wdMoney.getTransaction());
+			
+			UserAccumulatedResultsDBHandler.getInstance().
+			updateAddedMoneyOrWDMoneyQuery("WDAccumulatedMoney", 
+					UserAccumulatedResultsDBHandler.UPDATE_WITHDRAWNMONEY_BY_USER_ID, userProfileId, balance);
+			
+			LazyScheduler.getInstance().submit(new AddTransactionsTask(wdRelatedTransactions));
+		} catch(SQLException ex) {
+			logger.error("Error while executing withdraw lock money statement", ex);
+			throw ex;
+		} finally {
+			if (ps != null) {
+				ps.close();
+			}
+			if (dbConn != null) {
+				dbConn.close();
+			}
+		}
+		return true;
+	}
+	
+	private UserMoney getUserMoney(long id) throws SQLException, NotAllowedException {
+		UserMoney userMoneyDb = UserMoneyDBHandler.getInstance().getUserMoneyById(id);
+		return userMoneyDb;
 	}
 }

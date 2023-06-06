@@ -18,14 +18,13 @@ import com.ab.core.constants.QuizConstants;
 import com.ab.core.db.UserAccumulatedResultsDBHandler;
 import com.ab.core.exceptions.InternalException;
 import com.ab.core.exceptions.NotAllowedException;
-import com.ab.core.handlers.PaymentProgressCheck;
 import com.ab.core.handlers.UserMoneyHandler;
+import com.ab.core.helper.CelebritySpecialHandler;
 import com.ab.core.helper.WinnersMoneyUpdateStatus;
 import com.ab.core.pojo.GameSlotMoneyStatus;
 import com.ab.core.pojo.UserMoney;
 import com.ab.core.pojo.UsersCompleteMoneyDetails;
 import com.ab.core.pojo.WithdrawMoney;
-import com.ab.core.helper.CelebritySpecialHandler;
 
 @RestController
 public class UserMoneyController extends BaseController {
@@ -56,6 +55,8 @@ public class UserMoneyController extends BaseController {
 			long[] userAccumulatedResults = UserAccumulatedResultsDBHandler.getInstance().getAccumulatedResults(userProfileId);
 			userMoney.setWinAmount(userAccumulatedResults[0]);
 			userMoney.setReferAmount(userAccumulatedResults[1]);
+			userMoney.setAddedAmount(userAccumulatedResults[2]);
+			userMoney.setWithdrawnAmount(userAccumulatedResults[3]);
 			return userMoney;
 		} catch (Exception ex) {
 			logger.error(QuizConstants.ERROR_PREFIX_START);
@@ -65,26 +66,8 @@ public class UserMoneyController extends BaseController {
 		}
 	}
 	
-	@RequestMapping(value = "/money/add", method = RequestMethod.POST, produces = "application/json")
-	public @ResponseBody boolean addMoney(@RequestBody UsersCompleteMoneyDetails completeDetails)
-			throws InternalException {
-		logger.info("{} This is in addMoney with records size", completeDetails.getLogTag());
-		try {
-			long uid = completeDetails.getUsersMoneyTransactionList().get(0).getUserProfileId();
-			return UserMoneyHandler.getInstance().addMoney(completeDetails);
-		} catch (SQLException ex) {
-			logger.error(QuizConstants.ERROR_PREFIX_START);
-			logger.error("{} Exception in addMoney", completeDetails.getLogTag());
-			logger.error("Exception is: ", ex);
-			logger.error(QuizConstants.ERROR_PREFIX_END);
-			throw new InternalException("Server Error in addMoney");
-		}
-				
-	}
-	
-	
 	@RequestMapping(value = "/money/update", method = RequestMethod.POST, produces = "application/json")
-	public @ResponseBody List<Integer> updatePlayedMoney(@RequestBody UsersCompleteMoneyDetails completeDetails)
+	public @ResponseBody List<Integer> updateGameMoney(@RequestBody UsersCompleteMoneyDetails completeDetails)
 			throws InternalException {
 		logger.info("{} {} This is in updatePlayedMoney with records size", completeDetails.getLogTag(),
 				completeDetails.getUsersMoneyTransactionList().size());
@@ -101,9 +84,6 @@ public class UserMoneyController extends BaseController {
 	
 	@RequestMapping(value = "/money/wd", method = RequestMethod.POST, produces = "application/json")
 	public @ResponseBody boolean performWithdraw(@RequestBody WithdrawMoney wdMoney) throws InternalException {
-		if (PaymentProgressCheck.getInstance().isWinMoneyPaymentInProgress(wdMoney.getUid())) {
-			throw new InternalException("Win Money Payment in Progress. Try Later");
-		}
 		try {
 			return UserMoneyHandler.getInstance().performWitdrawOperation(wdMoney);
 		} catch (SQLException ex) {

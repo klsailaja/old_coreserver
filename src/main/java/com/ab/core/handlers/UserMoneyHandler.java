@@ -1,31 +1,22 @@
 package com.ab.core.handlers;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.ab.core.common.LazyScheduler;
 import com.ab.core.constants.QuizConstants;
-import com.ab.core.constants.UserMoneyAccountType;
-import com.ab.core.constants.UserMoneyOperType;
-import com.ab.core.constants.WithdrawReqState;
-import com.ab.core.db.ConnectionPool;
 import com.ab.core.db.UserAccumulatedResultsDBHandler;
 import com.ab.core.db.UserMoneyDBHandler;
 import com.ab.core.exceptions.NotAllowedException;
+import com.ab.core.helper.MoneyUpdater;
 import com.ab.core.helper.SingleThreadMoneyUpdater;
 import com.ab.core.helper.WinnersMoneyUpdateStatus;
 import com.ab.core.pojo.MoneyTransaction;
-import com.ab.core.pojo.MyTransaction;
 import com.ab.core.pojo.UserMoney;
 import com.ab.core.pojo.UsersCompleteMoneyDetails;
 import com.ab.core.pojo.WithdrawMoney;
-import com.ab.core.tasks.AddTransactionsTask;
 import com.ab.core.tasks.UserMoneyUpdateProcessorTask;
 
 public class UserMoneyHandler {
@@ -94,7 +85,12 @@ public class UserMoneyHandler {
 		
 		if (usersMoneyDetails.getRequestId() == 0) {
 			moneyProcessorTask.run();
-			return moneyProcessorTask.getMoneyUpdateResults();
+			List<Integer> syncCallResults = moneyProcessorTask.getMoneyUpdateResults();
+			if (syncCallResults == null) {
+				throw new NotAllowedException("Server Busy. Try after 2 minutes");
+			} else {
+				return syncCallResults;
+			}
 		} else {
 			WinnersMoneyUpdateStatus.getInstance().createEntry(usersMoneyDetails);
 		}
@@ -104,106 +100,14 @@ public class UserMoneyHandler {
 	}
 	
 	public boolean performWitdrawOperation(WithdrawMoney wdMoney) throws SQLException {
-		
-		String wdSql = UserMoneyDBHandler.WITHDRAW_BALANCE_AMOUNT_BY_USER_ID;
-
-		long userProfileId = wdMoney.getUid();
-		
-		long balance = wdMoney.getWdAmt();
-		long lockBalance = wdMoney.getWdAmt();
-		
-		UserMoney userMoney = getUserMoney(userProfileId);
-		long userOB = userMoney.getAmount();
-		long userCB = userOB; 
-		
-		if (wdMoney.getWdType() == WithdrawReqState.OPEN.getId()) {
-			userCB = userOB - balance;
-			balance = -1 * balance;
-			lockBalance = wdMoney.getWdAmt();
-		} else if (wdMoney.getWdType() == WithdrawReqState.CANCELLED.getId()) {
-			balance = wdMoney.getWdAmt();
-			lockBalance = -1 * lockBalance;
-			userCB = userOB + balance;
-		} else if (wdMoney.getWdType() == WithdrawReqState.CLOSED.getId()) {
-			balance = 0;
-			lockBalance = -1 * lockBalance;
-		}
-		
-		ConnectionPool cp = null;
-		Connection dbConn = null;
-		PreparedStatement ps = null;
-		
-		
-		
-		int withDrawResult = 0;
-		
 		try {
-			cp = ConnectionPool.getInstance();
-			dbConn = cp.getDBConnection();
-			ps = dbConn.prepareStatement(wdSql);
-			
-			ps.setLong(1, balance);
-			ps.setLong(2, lockBalance);
-			ps.setLong(3, userProfileId);
-			
-			int createResult = ps.executeUpdate();
-			if (createResult > 0) {
-				withDrawResult = 1;
-			}
-			logger.debug("WithdrawMoney operation result {}", withDrawResult);
-			wdMoney.getTransaction().setOperResult(withDrawResult);
-			wdMoney.getTransaction().setOpeningBalance(userOB);
-			wdMoney.getTransaction().setClosingBalance(userCB);
-			
-			List<MyTransaction> wdRelatedTransactions = new ArrayList<>();
-			wdRelatedTransactions.add(wdMoney.getTransaction());
-			
-			LazyScheduler.getInstance().submit(new AddTransactionsTask(wdRelatedTransactions));
-		} catch(SQLException ex) {
-			logger.error("Error while executing withdraw lock money statement", ex);
-			throw ex;
-		} finally {
-			if (ps != null) {
-				ps.close();
-			}
-			if (dbConn != null) {
-				dbConn.close();
-			}
+			return MoneyUpdater.getInstance().performWitdrawOperation(wdMoney);
+		} catch (Exception ex) {
+			throw new NotAllowedException("Server Busy. Try after 2 minutes");
 		}
-		return true;
 	}
 
 	public boolean addMoney(UsersCompleteMoneyDetails completeDetails) {
-		List<MoneyTransaction> transactionsList = completeDetails.getUsersMoneyTransactionList();
-		UserMoney userMoneyObject = UserMoneyDBHandler.getInstance().getUserMoneyById(completeDetails.getUsersMoneyTransactionList().get(0).getUserProfileId());
-		long userOB = userMoneyObject.getAmount();
-		long userBalance = userOB;
-		long userCB = userOB;
-		long userWinMoney = 0;
-		long userReferMoney = 0;
-		long userLoadedMoney = 0;
-		
-		for (MoneyTransaction moneyTran : transactionsList) {
-			long transactionAmount = moneyTran.getAmount();
-			UserMoneyAccountType userAccountType = moneyTran.getAccountType();
-			if (moneyTran.getOperType() == UserMoneyOperType.ADD) {
-				userBalance = userBalance + transactionAmount;
-			} else {
-				userBalance = userBalance - transactionAmount;
-			}
-			userCB = userBalance;
-			moneyTran.getTransaction().setOpeningBalance(userOB);
-			moneyTran.getTransaction().setClosingBalance(userCB);
-			userOB = userCB;
-
-			if (userAccountType == UserMoneyAccountType.LOADED_MONEY) {
-				if (moneyTran.getOperType() == UserMoneyOperType.ADD) {
-					userLoadedMoney = userLoadedMoney + transactionAmount;
-				} else {
-					userLoadedMoney = userLoadedMoney - transactionAmount;
-				}
-			}
-		}
 		return false;
 	}
 }
