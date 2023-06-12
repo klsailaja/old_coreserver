@@ -497,7 +497,7 @@ public class UserProfileController extends BaseController {
 		
 		logger.info("userId is: " + userId + " and server index is :" + serverIndex);
 		
-		String testIpAddress = "192.168.1.6";
+		String testIpAddress = "192.168.1.4";
 		
 		if (serverIndex == 0) {
 			ipAddr = testIpAddress;

@@ -54,7 +54,7 @@ public class QuizConstants {
 	
 	public static String FORGOT_MAIL_CONTENTS;
 	
-	public static final int[] GAMES_RATES_IN_ONE_SLOT_SPECIAL = {0, 25, 50, 75, 100, 150, 25, 50, 75, 100, 150};
+	public static final int[] GAMES_RATES_IN_ONE_SLOT_SPECIAL = {0, 50, 50, 75, 100, 125, 50, 50, 75, 100, 125};
 	
 	public static void initializeProps() {
 		try {

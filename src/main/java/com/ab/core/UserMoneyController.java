@@ -20,6 +20,7 @@ import com.ab.core.exceptions.InternalException;
 import com.ab.core.exceptions.NotAllowedException;
 import com.ab.core.handlers.UserMoneyHandler;
 import com.ab.core.helper.CelebritySpecialHandler;
+import com.ab.core.helper.Utils;
 import com.ab.core.helper.WinnersMoneyUpdateStatus;
 import com.ab.core.pojo.GameSlotMoneyStatus;
 import com.ab.core.pojo.UserMoney;
@@ -32,6 +33,12 @@ public class UserMoneyController extends BaseController {
 	// get money
 	// add money 
 	// Transfer
+	
+	@RequestMapping(value = "/coincost/{coincount}", method = RequestMethod.GET, produces = "application/json") 
+	public @ResponseBody long getCoinsCost(@PathVariable("coincount") long coincount) 
+			throws NotAllowedException {
+		return Utils.convertCoinsToMoney(coincount);
+	}
 	
 	@RequestMapping(value = "/money/{userProfileId}", method = RequestMethod.GET, produces = "application/json")
 	public @ResponseBody UserMoney getUserMoney(@PathVariable("userProfileId") long userProfileId) 

@@ -4,7 +4,16 @@ public class WithdrawMoney {
 	private long uid;
 	private int wdAmt;
 	private int wdType;
+	private int wdCoinCount;
 	private MyTransaction transaction;
+	
+	public int getWdCoinCount() {
+		return wdCoinCount;
+	}
+	public void setWdCoinCount(int wdCoinCount) {
+		this.wdCoinCount = wdCoinCount;
+	}
+
 	public long getUid() {
 		return uid;
 	}

@@ -416,6 +416,10 @@ public class MoneyUpdater {
 		
 		long balance = wdMoney.getWdAmt();
 		long lockBalance = wdMoney.getWdAmt();
+		if (!QuizConstants.MONEY_MODE) {
+			balance = wdMoney.getWdCoinCount();
+			lockBalance = wdMoney.getWdCoinCount();
+		}
 		
 		UserMoney userMoney = getUserMoney(userProfileId);
 		long userOB = userMoney.getAmount();
@@ -463,6 +467,9 @@ public class MoneyUpdater {
 			List<MyTransaction> wdRelatedTransactions = new ArrayList<>();
 			wdRelatedTransactions.add(wdMoney.getTransaction());
 			
+			if (!QuizConstants.MONEY_MODE) {
+				balance = Utils.convertCoinsToMoney(balance);
+			}
 			UserAccumulatedResultsDBHandler.getInstance().
 			updateAddedMoneyOrWDMoneyQuery("WDAccumulatedMoney", 
 					UserAccumulatedResultsDBHandler.UPDATE_WITHDRAWNMONEY_BY_USER_ID, userProfileId, balance);

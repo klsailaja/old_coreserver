@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import com.ab.core.db.UserProfileDBHandler;
+import com.ab.core.exceptions.NotAllowedException;
 import com.ab.core.pojo.MyTransaction;
 import com.ab.core.pojo.UserProfile;
 
@@ -131,5 +132,12 @@ public class Utils {
 			strBuffer.append(eq);
 		}
 		return strBuffer.toString();
+	}
+
+	public static long convertCoinsToMoney(long coincount) {
+		if (coincount < 0) {
+			throw new NotAllowedException("Invalid Coin Count");
+		}
+		return (coincount * 10)/100;
 	}
 }
