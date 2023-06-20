@@ -10,6 +10,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.ab.core.common.LazyScheduler;
+import com.ab.core.common.TAGS;
+import com.ab.core.constants.QuizConstants;
 import com.ab.core.db.MyTransactionDBHandler;
 
 public class WinMsgHandler implements Runnable {
@@ -17,9 +19,11 @@ public class WinMsgHandler implements Runnable {
 	private static final Logger logger = LogManager.getLogger(WinMsgHandler.class);
 	private static WinMsgHandler instance = null;
 	
+	// combinedMessages will have top WIN messages and top WD messages from the server instance 1
 	private List<String> combinedMessages = new ArrayList<>();
-	private List<String> gameWdMsgs = new ArrayList<>();
 	private List<String> gameWinMsgs = new ArrayList<>();
+	// top WD messages from the server instance 1
+	private List<String> gameWdMsgs = new ArrayList<>();
 	private ReadWriteLock lock = new ReentrantReadWriteLock();
 	
 	private WinMsgHandler() {
@@ -27,7 +31,7 @@ public class WinMsgHandler implements Runnable {
 	
 	public static WinMsgHandler getInstance() {
 		if (instance == null) {
-			logger.debug("In WinMsgHandler getInstance() method instance created");
+			logger.debug("{} In WinMsgHandler getInstance() method instance created", TAGS.WIN_WD_MSG_TASK);
 			instance = new WinMsgHandler();
 			instance.initialize();
 		}
@@ -41,14 +45,15 @@ public class WinMsgHandler implements Runnable {
 
 	@Override
 	public void run() {
-		
+		logger.info("{} In WinMsgHandler run()", TAGS.WIN_WD_MSG_TASK);
 		lock.writeLock().lock();
 		try {
 			
 			combinedMessages.clear();
 			gameWinMsgs.clear();
 			
-			List<String> recentWinMsgs = MyTransactionDBHandler.getInstance().getRecentWinRecords(-1, false, null);
+			List<String> recentWinMsgs = MyTransactionDBHandler.getInstance().
+					getRecentWinRecords(TAGS.WIN_WD_MSG_TASK, -1, false, null);
 			gameWinMsgs.addAll(recentWinMsgs);
 			
 			List<String> remainingMsgs = gameWinMsgs;
@@ -70,14 +75,19 @@ public class WinMsgHandler implements Runnable {
 			}
 			combinedMessages.addAll(remainingMsgs.subList(smallSize, remainingMsgs.size()));
 		} catch(Exception ex) {
-			logger.error("Exception seen ", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_START);
+			logger.error("Exception seen in Core Server Win Msg Handler", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
+			
+		} finally {
+			lock.writeLock().unlock();
 		}
-		lock.writeLock().unlock();
 	}
 	
 	public void setWithdrawMessages(List<String> wdMsgs) {
 		gameWdMsgs.clear();
 		gameWdMsgs.addAll(wdMsgs);
+		logger.info("{} Successful withdraw messages received here with size {}", TAGS.WIN_WD_MSG_TASK, wdMsgs.size());
 	}
 	
 	public List<String> getRecentWinMsgs() {

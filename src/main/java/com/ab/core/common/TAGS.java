@@ -9,4 +9,8 @@ public class TAGS {
 	
 	public static final String LOGGED_IN_USER_COUNT = "LOGGED_IN_USER_COUNT: ";
 	
+	public static final String WIN_WD_MSG_TASK = "WIN_WD_MSG_TASK: ";
+	public static final String WIN_WD_MSG_FETCH = "WIN_WD_MSG_FETCH: ";
+	
+	
 }

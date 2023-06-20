@@ -10,6 +10,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.ab.core.constants.QuizConstants;
 import com.ab.core.exceptions.NotAllowedException;
 import com.ab.core.pojo.MyTransaction;
 import com.ab.core.pojo.TransactionsHolder;
@@ -98,37 +99,9 @@ public class MyTransactionDBHandler {
 		return instance;
 	}
 	
-	public int deleteRecords(long timePeriod) throws SQLException {
-		logger.info("In deleteRecords method");
-		
-		ConnectionPool cp = null;
-		Connection dbConn = null;
-		PreparedStatement ps = null;
-		
-		try {
-			cp = ConnectionPool.getInstance();
-			dbConn = cp.getDBConnection();
-			ps = dbConn.prepareStatement(REMOVE_OLD_RECORDS);
-			
-			ps.setLong(1, timePeriod);
-			
-			int result = ps.executeUpdate();
-			logger.debug("In deleteRecords create op result : {}", result);
-			
-			return result;
-		} catch (SQLException ex) {
-			logger.error("Error in deleteRecords ", ex);
-			throw ex;
-		} finally {
-			if (ps != null) {
-				ps.close();
-			}
-			if (dbConn != null) {
-				dbConn.close();
-			}
-		}
-	}
+	// CRUD
 	
+	/* This method is for testing purpose. */
 	public void createTransactionsInBatch(List<MyTransaction> transactionsList, int batch) throws SQLException {
 		
 		ConnectionPool cp = null;
@@ -200,9 +173,9 @@ public class MyTransactionDBHandler {
 			logger.info("createTransactionsInBatch returned with success row count {} : failure row count {}", 
 					totalSuccessCount, totalFailureCount);
 		} catch(SQLException ex) {
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Error processing transactions list in bulk mode", ex);
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw ex;
 		} finally {
 			if (ps != null) {
@@ -247,9 +220,9 @@ public class MyTransactionDBHandler {
 			logger.debug("Transaction creation status {}", recordCreationState);
 			return recordCreationState;
 		} catch(SQLException ex) {
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_START);
 			logger.error("Error creating transaction entry", ex);
-			logger.error("******************************");
+			logger.error(QuizConstants.ERROR_PREFIX_END);
 			throw ex;
 		} finally {
 			if (ps != null) {
@@ -261,7 +234,46 @@ public class MyTransactionDBHandler {
 		}
 	}
 	
-	public List<String> getRecentWinRecords(long userProfileId, boolean isBoss, String bossUserName) throws SQLException {
+	
+	public int deleteRecords(long timePeriod) throws SQLException {
+		logger.info("In deleteRecords method");
+		
+		ConnectionPool cp = null;
+		Connection dbConn = null;
+		PreparedStatement ps = null;
+		
+		try {
+			cp = ConnectionPool.getInstance();
+			dbConn = cp.getDBConnection();
+			ps = dbConn.prepareStatement(REMOVE_OLD_RECORDS);
+			
+			ps.setLong(1, timePeriod);
+			
+			int result = ps.executeUpdate();
+			logger.debug("In deleteRecords create op result : {}", result);
+			
+			return result;
+		} catch (SQLException ex) {
+			logger.error(QuizConstants.ERROR_PREFIX_START);
+			logger.error("Error in deleteRecords ", ex);
+			logger.error(QuizConstants.ERROR_PREFIX_END);
+			throw ex;
+		} finally {
+			if (ps != null) {
+				ps.close();
+			}
+			if (dbConn != null) {
+				dbConn.close();
+			}
+		}
+	}
+	
+
+	
+	public List<String> getRecentWinRecords(String tag, long userProfileId, 
+			boolean isBoss, String bossUserName) throws SQLException {
+		
+		logger.debug("{} In getRecentWinRecords", tag);
 		
 		ConnectionPool cp = ConnectionPool.getInstance();
 		Connection dbConn = cp.getDBConnection();
@@ -280,6 +292,10 @@ public class MyTransactionDBHandler {
 		List<String> winMessages = new ArrayList<>();
 		String msg1 = "$NAME won Rs.$AMT recently";
 		String msg2 = "Your network friend $NAME won Rs.$AMT recently";
+		if (!QuizConstants.MONEY_MODE) {
+			msg1 = "$NAME won $AMT coins recently";
+			msg2 = "Your network friend $NAME won $AMT coins recently";
+		}
 		try {
 			rs = ps.executeQuery();
 			if (rs != null) {

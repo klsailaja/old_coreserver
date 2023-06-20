@@ -365,11 +365,12 @@ public class UserProfileController extends BaseController {
 		return WinMsgHandler.getInstance().getRecentWinMsgs();
 	}
 	
+	/* This method fetches the generic win/wd messages */
 	@RequestMapping(value = "/wd/messages/{userId}/{maxCount}", method = RequestMethod.GET, produces = "application/json")
 	public @ResponseBody List<String> getRecentWinWDMessages(@PathVariable long userId, @PathVariable int maxCount) 
 			throws NotAllowedException, InternalException {
 		
-		logger.info("In getRecentWinWDMessages with userId {} and {}", userId, maxCount);
+		logger.debug("{} In getRecentWinWDMessages with userId {} and {}", TAGS.WIN_WD_MSG_FETCH, userId, maxCount);
 		List<String> combinedMsgs = WinMsgHandler.getInstance().getCombinedMessages();
 		return combinedMsgs;
 	}
@@ -380,6 +381,7 @@ public class UserProfileController extends BaseController {
 		return getUserFrdDetails(userId, maxCount);
 	}
 	
+	/* This call fetches the win and wd msgs. When userId is valid one, it fetches the closed grp msgs */
 	@RequestMapping(value = "/user/win/{userId}/{maxCount}", method = RequestMethod.GET, produces = "application/json")
 	public @ResponseBody List<String> getUserFrdsWinMsgs(@PathVariable long userId, @PathVariable int maxCount)
 			throws InternalException {
@@ -398,7 +400,8 @@ public class UserProfileController extends BaseController {
 			long frdUid = userNetwork.getClosedUserIdSet().get(index);
 			String frdName = userNetwork.getClosedUserNameList().get(index);
 			try {
-				List<String> winMsgs = MyTransactionDBHandler.getInstance().getRecentWinRecords(frdUid, true, frdName);
+				List<String> winMsgs = MyTransactionDBHandler.
+						getInstance().getRecentWinRecords(TAGS.WIN_WD_MSG_FETCH ,frdUid, true, frdName);
 				frdsWinMsgs.addAll(winMsgs);
 				frdsWinMsgs.add("*");
 			} catch(SQLException ex) {
@@ -497,7 +500,7 @@ public class UserProfileController extends BaseController {
 		
 		logger.info("userId is: " + userId + " and server index is :" + serverIndex);
 		
-		String testIpAddress = "192.168.1.4";
+		String testIpAddress = "192.168.1.5";
 		
 		if (serverIndex == 0) {
 			ipAddr = testIpAddress;
