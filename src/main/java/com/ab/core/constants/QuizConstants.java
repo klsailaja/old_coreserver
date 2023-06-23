@@ -16,9 +16,23 @@ public class QuizConstants {
 	
 	public static String ERROR_PREFIX_END;
 	
-	public static long MAX_USERS_COUNT;
+	// These below values are sent to quiz servers and used there start
 	
 	public static boolean MONEY_MODE;
+	
+	public static Integer COIN_BUY_RATE = -1;
+	
+	public static Integer COIN_SELL_RATE = -1;
+	
+	public static int TESTMODE;
+	
+	public static boolean MAINTENANCE_MODE;
+	
+	public static String MAINTENANCE_MODE_MSG;
+	
+	// These below values are sent to quiz servers and used there end.
+	
+	public static long MAX_USERS_COUNT;
 	
 	public static Integer MONEY_MODE_CONFIG = -1;
 	
@@ -34,9 +48,7 @@ public class QuizConstants {
 	
 	public static int MAX_BALANCE_ALLOWED;
 	
-	public static int TESTMODE;
 	
-	public static boolean MAINTENANCE_MODE;
 	
 	// Mail properties..
 	
@@ -92,9 +104,18 @@ public class QuizConstants {
 			value = props.getProperty("MAINTENANCE_MODE", "0");
 			MAINTENANCE_MODE = value.equals("1")? true: false;
 			
+			value = props.getProperty("MAINTENANCE_MODE_MSG", null);
+			MAINTENANCE_MODE_MSG = value;
+			
 			value = props.getProperty("MONEY_MODE", "0");
 			MONEY_MODE_CONFIG = Integer.parseInt(value); 
-			MONEY_MODE = value.equals("1")? true: false; 
+			MONEY_MODE = value.equals("1")? true: false;
+			
+			value = props.getProperty("COIN_BUY_RATE", "-1");
+			COIN_BUY_RATE = Integer.parseInt(value);
+			
+			value = props.getProperty("COIN_SELL_RATE", "-1");
+			COIN_SELL_RATE = Integer.parseInt(value);
 			
 			FROM_MAIL_ID = props.getProperty("FROM_MAIL_ID", "satyahasini25@gmail.com");
 			VERIFY_MAIL_ID_SUBJECT = props.getProperty("VERIFY_MAIL_ID_SUBJECT", "4-digit Verification Code");

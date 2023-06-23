@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,6 +34,22 @@ public class UserMoneyController extends BaseController {
 	// get money
 	// add money 
 	// Transfer
+	
+	@RequestMapping(value="/coreserver/props", method = RequestMethod.GET, produces = "application/json") 
+	public @ResponseBody Properties getCoreServerProps() {
+		String TESTMODE_KEY = "TESTMODE";
+		String MONEY_MODE_KEY = "MONEY_MODE";
+		String COIN_BUY_RATE_KEY = "COIN_BUY_RATE";
+		String COIN_SELL_RATE_KEY = "COIN_SELL_RATE";
+		
+		Properties props = new Properties();
+		props.setProperty(TESTMODE_KEY, String.valueOf(QuizConstants.TESTMODE));
+		props.setProperty(MONEY_MODE_KEY, String.valueOf(QuizConstants.MONEY_MODE_CONFIG));
+		props.setProperty(COIN_BUY_RATE_KEY, String.valueOf(QuizConstants.COIN_BUY_RATE));
+		props.setProperty(COIN_SELL_RATE_KEY, String.valueOf(QuizConstants.COIN_SELL_RATE));
+		return props;
+	}
+	
 	
 	@RequestMapping(value = "/coincost/{coincount}", method = RequestMethod.GET, produces = "application/json") 
 	public @ResponseBody long getCoinsCost(@PathVariable("coincount") long coincount) 
